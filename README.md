@@ -1,0 +1,99 @@
+# Spotify Blindtest Quiz 🎧
+
+Test your musical knowledge with an interactive blindtest quiz generated directly from your own Spotify Liked Songs! ✨ This is a serverless, front-end application that runs entirely in your browser.
+
+## 🎥 Demo
+
+*(It is highly recommended to create a short GIF showcasing the application flow and add it here. A great demo would show: the login screen, the "Ready to Play" screen, answering a question correctly (green), answering incorrectly (red), and the final score screen.)*
+
+![Demo GIF Placeholder](https://user-images.githubusercontent.com/1010335/222212921-2d64b854-47b2-4b2a-a713-274a1c5d03a1.gif)
+*Your awesome demo GIF here!*
+
+## 📖 About The Project
+
+This project was built to create a fun, personalized music quiz experience. Instead of random songs, it connects securely to your Spotify account, pulls your library of liked songs, and challenges you to identify 15-second snippets. The faster you answer, the more points you get!
+
+Because it's built without a backend and uses the Spotify Web Playback SDK, the entire experience, including audio playback, happens seamlessly within your web browser.
+
+## ✨ Features
+
+-   🔐 **Secure Spotify Authentication:** Uses the modern and secure Authorization Code Flow with PKCE.
+-   🎶 **Personalized Quiz:** Every quiz is dynamically generated from *your* music library.
+-   ⏱️ **Interactive Timed Rounds:** Each round plays a 15-second snippet with a visual countdown timer.
+-   🏆 **Dynamic Scoring:** Gain more points for answering correctly *and* quickly.
+-   ✅ **Instant Visual Feedback:** Answer buttons immediately turn green (correct) or red (incorrect).
+-   🔊 **Direct Audio Playback:** Music plays directly in the browser thanks to the Spotify Web Playback SDK.
+-   ☁️ **Fully Serverless:** No backend required! The app runs entirely on the client-side.
+
+## 🔧 Built With
+
+-   [React](https://reactjs.org/)
+-   [Spotify Web API](https://developer.spotify.com/documentation/web-api)
+-   [Spotify Web Playback SDK](https://developer.spotify.com/documentation/web-playback-sdk)
+
+## 🚀 Getting Started
+
+To get a local copy up and running, follow these simple steps.
+
+### ✅ Prerequisites
+
+You will need the following software and accounts to run this project:
+
+-   **Node.js & npm:** Download and install from [nodejs.org](https://nodejs.org/).
+-   **Spotify Account:** A **Spotify Premium** account is required for the Web Playback SDK to play audio.
+
+### ⚙️ Setup & Installation
+
+1.  **Clone the repository:**
+    ```sh
+    git clone [https://github.com/antoinedelia/spotify-blindtest.git](https://github.com/antoinedelia/spotify-blindtest.git)
+    cd spotify-blindtest
+    ```
+
+2.  **Set up your Spotify Application:**
+    -   Go to the [Spotify Developer Dashboard](https://developer.spotify.com/dashboard) and log in.
+    -   Click **"Create app"**.
+    -   Give it a name (e.g., "React Blindtest") and a description.
+    -   Once created, you will see your **Client ID**. Copy this value.
+    -   Click on **"Settings"**.
+    -   In the "Redirect URIs" section, add `http://localhost:3000` and click **"Save"**. This is crucial for the login flow to work locally.
+
+3.  **Configure Environment Variables:**
+    -   In the root of the project, find the `App.js` file.
+    -   Locate the following line:
+        ```javascript
+        const CLIENT_ID = 'YOUR_CLIENT_ID';
+        ```
+    -   Replace `'YOUR_CLIENT_ID'` with the actual Client ID you copied from the Spotify Developer Dashboard.
+
+4.  **Install NPM packages:**
+    ```sh
+    npm install
+    ```
+
+5.  **Run the application:**
+    ```sh
+    npm start
+    ```
+
+    Your browser should automatically open to `http://localhost:3000`, and you'll be ready to play!
+
+## 🎮 Usage
+
+Once the application is running:
+
+1.  Click the "Login with Spotify" button.
+2.  You will be redirected to Spotify to authorize the application.
+3.  After authorization, you'll land on a "Ready to Play?" screen.
+4.  Click "Start Quiz" to begin. Audio for the first song will start playing.
+5.  Select the correct song title from the four options. Try to be as fast as you can!
+6.  After 10 rounds, your final score will be displayed.
+
+## 📜 License
+
+Distributed under the MIT License. See `LICENSE.txt` for more information.
+
+## 🙏 Acknowledgments
+
+-   A huge thanks to [Spotify](https://www.spotify.com) for providing the fantastic APIs that make this project possible.
+-   [Create React App](https://github.com/facebook/create-react-app) for the project boilerplate.
