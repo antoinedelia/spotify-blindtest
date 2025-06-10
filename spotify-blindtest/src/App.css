@@ -100,3 +100,40 @@ h2 {
   font-size: 2rem;
   color: #1DB954;
 }
+
+.timer {
+  font-size: 1.5rem;
+  font-weight: bold;
+  color: #1DB954;
+  /* Spotify Green */
+  margin-bottom: 1.5rem;
+  padding: 10px;
+  border: 2px solid #1DB954;
+  border-radius: 50%;
+  width: 60px;
+  height: 60px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+/* These styles should already exist, but ensure they are there */
+.option-btn.correct {
+  background-color: #1DB954;
+  border-color: #1DB954;
+  color: #ffffff;
+}
+
+.option-btn.incorrect {
+  background-color: #d93025;
+  border-color: #d93025;
+  color: #ffffff;
+}
+
+/* Add a style for disabled buttons after an answer */
+.option-btn:disabled {
+  cursor: not-allowed;
+  opacity: 0.7;
+}
