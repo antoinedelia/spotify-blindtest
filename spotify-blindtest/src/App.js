@@ -45,6 +45,8 @@ function App() {
   const [showComboBreak, setShowComboBreak] = useState(false);
   const [highScore, setHighScore] = useState(0);
 
+  const [totalLikedSongs, setTotalLikedSongs] = useState(0);
+
   const getComboMultiplier = (currentCombo) => {
     if (currentCombo >= 6) return 2.0;
     if (currentCombo >= 4) return 1.5;
@@ -121,6 +123,8 @@ function App() {
           if (!initialResponse.ok) throw new Error('Failed to fetch initial track count');
           const initialData = await initialResponse.json();
           const totalTracks = initialData.total;
+
+          setTotalLikedSongs(totalTracks);
 
           // 2. Calculate all the promises we need to make.
           const limit = 50;
@@ -339,7 +343,18 @@ function App() {
     }
     switch (gameState) {
       case 'loading': return <div><h1>Loading Your Music...</h1><p>Fetching liked songs. Please wait.</p></div>;
-      case 'ready': return (<div><h1>Ready to Play?</h1>{user && <p>Welcome, {user.display_name}!</p>}<p>Your liked songs are loaded. Click below to start the quiz.</p><button onClick={startQuiz} className="quiz-btn">Start Quiz</button></div>);
+      case 'ready':
+        return (
+          <div>
+            <h1>Ready to Play?</h1>
+            {user && <p>Welcome, {user.display_name}!</p>}
+
+            <p>We've found {totalLikedSongs} of your liked songs.</p>
+
+            <p>Click below to start the quiz.</p>
+            <button onClick={startQuiz} className="quiz-btn">Start Quiz</button>
+          </div>
+        );
       case 'quiz':
         const currentMultiplier = getComboMultiplier(combo);
 
