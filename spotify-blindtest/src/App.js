@@ -41,6 +41,14 @@ function App() {
   const songTimeoutRef = useRef(null);
 
   const [pointsGained, setPointsGained] = useState(0);
+  const [combo, setCombo] = useState(0);
+
+  const getComboMultiplier = (currentCombo) => {
+    if (currentCombo >= 6) return 2.0;
+    if (currentCombo >= 4) return 1.5;
+    if (currentCombo >= 2) return 1.2;
+    return 1.0;
+  };
 
 
   // --- Hooks for Authentication and SDK setup ---
@@ -214,6 +222,7 @@ function App() {
     setQuizSongs(selectedSongs);
     setCurrentQuestion(0);
     setScore(0);
+    setCombo(0);
     setGameState('quiz');
     loadQuestion(0, selectedSongs, songs);
   };
@@ -257,12 +266,30 @@ function App() {
     if (player) player.pause();
 
     if (selectedSong && selectedSong.id === quizSongs[currentQuestion].id) {
-      const points = Math.max(10, 100 - Math.floor((QUIZ_DURATION - timeLeft) * 5));
-      setScore(score + points);
+      // --- COMBO LOGIC ---
+      // 1. Get the multiplier based on the CURRENT combo.
+      const multiplier = getComboMultiplier(combo);
 
-      // --- THIS IS THE FIX ---
-      // Set the points gained to trigger the indicator
-      setPointsGained(points);
+      // 2. Calculate the base points (base + time + perfect).
+      let basePoints = 50;
+      basePoints += timeLeft * 7;
+      if (timeLeft >= 13) {
+        basePoints += 50;
+      }
+
+      // 3. Apply the multiplier and round to the nearest whole number.
+      const finalPoints = Math.round(basePoints * multiplier);
+
+      // 4. Update the score and the points indicator.
+      setScore(score + finalPoints);
+      setPointsGained(finalPoints);
+
+      // 5. Increment the combo for the next question.
+      setCombo(prevCombo => prevCombo + 1);
+
+    } else {
+      // --- WRONG ANSWER: Reset the combo ---
+      setCombo(0);
     }
 
     setTimeout(() => {
@@ -300,6 +327,7 @@ function App() {
       case 'loading': return <div><h1>Loading Your Music...</h1><p>Fetching liked songs. Please wait.</p></div>;
       case 'ready': return (<div><h1>Ready to Play?</h1>{user && <p>Welcome, {user.display_name}!</p>}<p>Your liked songs are loaded. Click below to start the quiz.</p><button onClick={startQuiz} className="quiz-btn">Start Quiz</button></div>);
       case 'quiz':
+        const currentMultiplier = getComboMultiplier(combo);
         return (
           <div className="quiz-container">
             <div className="question-counter">Song {currentQuestion + 1} / {quizSongs.length}</div>
@@ -314,6 +342,11 @@ function App() {
                 )}
               </div>
             </div>
+            {currentMultiplier > 1.0 && (
+              <div className="combo-indicator">
+                {currentMultiplier.toFixed(1)}x MULTIPLIER
+              </div>
+            )}
             <div className="timer">{timeLeft}</div>
             <h2>Guess the song!</h2>
             <div className="options-grid">
