@@ -41,7 +41,7 @@ function App() {
   const songTimeoutRef = useRef(null);
 
 
-  // --- Hooks for Authentication and SDK setup (logic unchanged) ---
+  // --- Hooks for Authentication and SDK setup ---
   useEffect(() => {
     const hash = window.location.hash;
     let token = window.localStorage.getItem('spotify_access_token');
@@ -86,55 +86,52 @@ function App() {
     }
   }, [sdkReady, accessToken]);
 
-  // --- OPTIMIZED DATA FETCHING ---
+  // --- OPTIMIZED PARALLEL DATA FETCHING ---
   useEffect(() => {
     if (deviceId && accessToken) {
       const fetchAllData = async () => {
         try {
-          // 1. Fetch User Profile
-          const userResponse = await fetch(SPOTIFY_API.me, {
-            headers: { 'Authorization': `Bearer ${accessToken}` }
-          });
+          // Fetch User Profile
+          const userResponse = await fetch(SPOTIFY_API.me, { headers: { 'Authorization': `Bearer ${accessToken}` } });
           if (!userResponse.ok) throw new Error('Failed to fetch user');
           const userData = await userResponse.json();
           setUser(userData);
 
-          // --- FIX: Implement manual pagination using offset ---
-          let tracks = [];
-          let offset = 0;
+          // 1. Make a single request to get the total number of liked songs.
+          const initialTracksUrl = new URL(SPOTIFY_API.tracks);
+          initialTracksUrl.searchParams.append('limit', 1);
+          const initialResponse = await fetch(initialTracksUrl, { headers: { 'Authorization': `Bearer ${accessToken}` } });
+          if (!initialResponse.ok) throw new Error('Failed to fetch initial track count');
+          const initialData = await initialResponse.json();
+          const totalTracks = initialData.total;
+
+          // 2. Calculate all the promises we need to make.
           const limit = 50;
           const fields = 'items(track(id,name,uri,duration_ms,artists(name)))';
-
-          while (true) {
+          const promises = [];
+          for (let offset = 0; offset < totalTracks; offset += limit) {
             const url = new URL(SPOTIFY_API.tracks);
             url.searchParams.append('limit', limit);
             url.searchParams.append('offset', offset);
             url.searchParams.append('fields', fields);
-
-            const tracksResponse = await fetch(url, {
-              headers: { 'Authorization': `Bearer ${accessToken}` }
-            });
-
-            if (!tracksResponse.ok) {
-              // If we get a 401 Unauthorized, the token might be expired.
-              if (tracksResponse.status === 401) {
-                handleLogout();
-              }
-              throw new Error(`Failed to fetch tracks (status: ${tracksResponse.status})`);
-            }
-
-            const data = await tracksResponse.json();
-            tracks.push(...data.items);
-
-            // If the number of returned items is less than the limit,
-            // we've reached the last page.
-            if (data.items.length < limit) {
-              break;
-            }
-
-            // Move to the next page for the next iteration.
-            offset += limit;
+            promises.push(fetch(url, { headers: { 'Authorization': `Bearer ${accessToken}` } }));
           }
+
+          // 3. Execute all promises in parallel.
+          const responses = await Promise.all(promises);
+          for (const res of responses) {
+            if (!res.ok) {
+              if (res.status === 401) handleLogout();
+              throw new Error(`A fetch request failed with status: ${res.status}`);
+            }
+          }
+
+          // 4. Parse the JSON from all responses in parallel.
+          const jsonPromises = responses.map(res => res.json());
+          const paginatedResults = await Promise.all(jsonPromises);
+
+          // 5. Combine the paginated results into a single flat array.
+          const tracks = paginatedResults.flatMap(page => page.items);
 
           // Filter tracks as before
           const filteredTracks = tracks.map(item => item.track).filter(track => track && track.duration_ms >= 30000);
@@ -148,24 +145,18 @@ function App() {
 
         } catch (error) {
           console.error("Error fetching data:", error);
-          // Optionally add more robust error handling here
         }
       };
       fetchAllData();
     }
   }, [deviceId, accessToken]);
 
-
-  // Effect for the countdown timer (logic unchanged)
+  // Effect for the countdown timer
   useEffect(() => {
     if (gameState === 'quiz' && !answered) {
       timerIntervalRef.current = setInterval(() => {
         setTimeLeft(prevTime => {
-          if (prevTime <= 1) {
-            clearInterval(timerIntervalRef.current);
-            handleAnswer(null);
-            return 0;
-          }
+          if (prevTime <= 1) { clearInterval(timerIntervalRef.current); handleAnswer(null); return 0; }
           return prevTime - 1;
         });
       }, 1000);
@@ -174,7 +165,7 @@ function App() {
   }, [gameState, answered, currentQuestion]);
 
 
-  // --- CORE FUNCTIONS (logic unchanged) ---
+  // --- CORE & RENDER FUNCTIONS (FULLY IMPLEMENTED) ---
 
   const handleLogin = async () => {
     const generateRandomString = (length) => {
@@ -285,14 +276,40 @@ function App() {
 
   const restartQuiz = () => startQuiz();
 
-
-  // --- RENDER LOGIC (unchanged) ---
   const renderContent = () => {
-    if (!accessToken) { return (<div> <h1>Spotify Blindtest</h1> <p>Test your knowledge on your own liked songs!</p> <button onClick={handleLogin} className="login-btn">Login with Spotify</button> </div>); }
+    if (!accessToken) {
+      return (
+        <div>
+          <h1>Spotify Blindtest</h1>
+          <p>Test your knowledge on your own liked songs!</p>
+          <button onClick={handleLogin} className="login-btn">Login with Spotify</button>
+        </div>
+      );
+    }
     switch (gameState) {
       case 'loading': return <div><h1>Loading Your Music...</h1><p>Fetching liked songs. Please wait.</p></div>;
       case 'ready': return (<div><h1>Ready to Play?</h1>{user && <p>Welcome, {user.display_name}!</p>}<p>Your liked songs are loaded. Click below to start the quiz.</p><button onClick={startQuiz} className="quiz-btn">Start Quiz</button></div>);
-      case 'quiz': return (<div className="quiz-container"> <div className="question-counter">Song {currentQuestion + 1} / {quizSongs.length}</div> <div className="score">Score: {score}</div> <div className="timer">{timeLeft}</div> <h2>Guess the song!</h2> <div className="options-grid"> {options.map(song => song && (<button key={song.id} onClick={() => handleAnswer(song)} className={getButtonClassName(song)} disabled={answered} > {song.name} by {song.artists.map(a => a.name).join(', ')} </button>))} </div> </div>);
+      case 'quiz':
+        return (
+          <div className="quiz-container">
+            <div className="question-counter">Song {currentQuestion + 1} / {quizSongs.length}</div>
+            <div className="score">Score: {score}</div>
+            <div className="timer">{timeLeft}</div>
+            <h2>Guess the song!</h2>
+            <div className="options-grid">
+              {options.map(song => song && (
+                <button
+                  key={song.id}
+                  onClick={() => handleAnswer(song)}
+                  className={getButtonClassName(song)}
+                  disabled={answered}
+                >
+                  {song.name} by {song.artists.map(a => a.name).join(', ')}
+                </button>
+              ))}
+            </div>
+          </div>
+        );
       case 'results': return (<div className="results-container"><h1>Quiz Finished!</h1><h2>Your final score is: {score}</h2><button onClick={restartQuiz} className="restart-btn">Play Again</button><button onClick={handleLogout} className="restart-btn" style={{ backgroundColor: '#555', marginLeft: '1rem' }}>Logout</button></div>);
       default: return <div><h1>Connecting to Spotify...</h1><p>Please wait.</p></div>;
     }
