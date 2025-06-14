@@ -42,6 +42,7 @@ function App() {
 
   const [pointsGained, setPointsGained] = useState(0);
   const [combo, setCombo] = useState(0);
+  const [showComboBreak, setShowComboBreak] = useState(false);
 
   const getComboMultiplier = (currentCombo) => {
     if (currentCombo >= 6) return 2.0;
@@ -289,7 +290,14 @@ function App() {
 
     } else {
       // --- WRONG ANSWER: Reset the combo ---
-      setCombo(0);
+      if (combo > 1) { // Only show the message if they had a real combo
+        setShowComboBreak(true);
+        // Hide the message after its animation is done (1 second)
+        setTimeout(() => {
+          setShowComboBreak(false);
+        }, 1000);
+      }
+      setCombo(0); // Reset the combo
     }
 
     setTimeout(() => {
@@ -328,6 +336,14 @@ function App() {
       case 'ready': return (<div><h1>Ready to Play?</h1>{user && <p>Welcome, {user.display_name}!</p>}<p>Your liked songs are loaded. Click below to start the quiz.</p><button onClick={startQuiz} className="quiz-btn">Start Quiz</button></div>);
       case 'quiz':
         const currentMultiplier = getComboMultiplier(combo);
+
+        let comboClassName = "combo-indicator";
+        if (currentMultiplier >= 2.0) {
+          comboClassName += " combo-max"; // Red for 2.0x
+        } else if (currentMultiplier >= 1.5) {
+          comboClassName += " combo-hot"; // Orange for 1.5x
+        }
+
         return (
           <div className="quiz-container">
             <div className="question-counter">Song {currentQuestion + 1} / {quizSongs.length}</div>
@@ -342,11 +358,22 @@ function App() {
                 )}
               </div>
             </div>
-            {currentMultiplier > 1.0 && (
-              <div className="combo-indicator">
-                {currentMultiplier.toFixed(1)}x MULTIPLIER
-              </div>
-            )}
+            <div className="combo-display-area">
+              {/* The active combo multiplier */}
+              {currentMultiplier > 1.0 && (
+                <div
+                  // --- NEW: The 'key' forces a re-render and re-animation on change ---
+                  key={currentMultiplier}
+                  className={comboClassName}
+                >
+                  {currentMultiplier.toFixed(1)}x MULTIPLIER
+                </div>
+              )}
+              {/* The "Combo Lost" message */}
+              {showComboBreak && (
+                <div className="combo-break-indicator">COMBO LOST</div>
+              )}
+            </div>
             <div className="timer">{timeLeft}</div>
             <h2>Guess the song!</h2>
             <div className="options-grid">

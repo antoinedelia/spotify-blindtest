@@ -189,19 +189,48 @@ h2 {
 }
 
 /* --- COMBO INDICATOR --- */
+.combo-display-area {
+  min-height: 3rem;
+  /* Reserve vertical space to prevent layout jumps */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 1rem;
+}
 
 .combo-indicator {
-  color: #ff9800;
-  /* A fiery orange */
+  /* Default color for the 1.2x multiplier */
+  color: #1DB954;
+  /* Spotify Green */
   font-weight: bold;
   font-size: 1.6rem;
   text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
-  margin-bottom: 1rem;
-
-  /* A little "pop" animation when it appears */
   animation: combo-pop 0.3s ease-out;
 }
 
+/* NEW: Tier 2 Color (1.5x) */
+.combo-indicator.combo-hot {
+  color: #ff9800;
+  /* Fiery Orange */
+}
+
+/* NEW: Tier 3 Color (2.0x) */
+.combo-indicator.combo-max {
+  color: #f44336;
+  /* Powerful Red */
+}
+
+/* NEW: Combo break indicator style */
+.combo-break-indicator {
+  color: #dc3545;
+  /* A harsh red */
+  font-weight: bold;
+  font-size: 1.6rem;
+  animation: shake-and-fade 1s ease-out;
+}
+
+
+/* This animation is used for the combo indicator appearing or leveling up */
 @keyframes combo-pop {
   from {
     transform: scale(0.5);
@@ -211,5 +240,42 @@ h2 {
   to {
     transform: scale(1);
     opacity: 1;
+  }
+}
+
+/* NEW: This animation is used for the "COMBO LOST" message */
+@keyframes shake-and-fade {
+  0% {
+    transform: translateX(0);
+    opacity: 1;
+  }
+
+  10% {
+    transform: translateX(-10px);
+  }
+
+  20% {
+    transform: translateX(10px);
+  }
+
+  30% {
+    transform: translateX(-10px);
+  }
+
+  40% {
+    transform: translateX(10px);
+  }
+
+  50% {
+    transform: translateX(0);
+  }
+
+  70% {
+    opacity: 1;
+  }
+
+  100% {
+    opacity: 0;
+    transform: translateY(20px);
   }
 }
