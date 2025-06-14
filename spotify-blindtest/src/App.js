@@ -349,7 +349,7 @@ function App() {
             <h1>Ready to Play?</h1>
             {user && <p>Welcome, {user.display_name}!</p>}
 
-            <p>We've found {totalLikedSongs} of your liked songs.</p>
+            <p>We've found <b>{totalLikedSongs}</b> of your liked songs.</p>
 
             <p>Click below to start the quiz.</p>
             <button onClick={startQuiz} className="quiz-btn">Start Quiz</button>
