@@ -279,3 +279,31 @@ h2 {
     transform: translateY(20px);
   }
 }
+
+.highscore-text {
+  font-size: 1.2rem;
+  color: #aaa;
+  margin-top: -1rem;
+  margin-bottom: 2rem;
+}
+
+.new-highscore-message {
+  font-size: 1.5rem;
+  font-weight: bold;
+  color: #ffeb3b;
+  /* A celebratory gold color */
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+  animation: new-highscore-pop 0.5s ease-out;
+}
+
+@keyframes new-highscore-pop {
+  from {
+    transform: scale(0.5);
+    opacity: 0;
+  }
+
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
+}

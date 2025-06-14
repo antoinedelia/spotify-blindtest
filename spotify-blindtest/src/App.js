@@ -43,6 +43,7 @@ function App() {
   const [pointsGained, setPointsGained] = useState(0);
   const [combo, setCombo] = useState(0);
   const [showComboBreak, setShowComboBreak] = useState(false);
+  const [highScore, setHighScore] = useState(0);
 
   const getComboMultiplier = (currentCombo) => {
     if (currentCombo >= 6) return 2.0;
@@ -107,6 +108,11 @@ function App() {
           if (!userResponse.ok) throw new Error('Failed to fetch user');
           const userData = await userResponse.json();
           setUser(userData);
+
+          const storedHighScore = localStorage.getItem(`blindtest_highscore_${userData.id}`);
+          if (storedHighScore) {
+            setHighScore(parseInt(storedHighScore, 10));
+          }
 
           // 1. Make a single request to get the total number of liked songs.
           const initialTracksUrl = new URL(SPOTIFY_API.tracks);
@@ -174,6 +180,21 @@ function App() {
     }
     return () => clearInterval(timerIntervalRef.current);
   }, [gameState, answered, currentQuestion]);
+
+  useEffect(() => {
+    // We only care about what happens when the game state becomes 'results'
+    if (gameState === 'results') {
+      // At this point, the 'score' state is guaranteed to be the final score.
+      if (score > highScore) {
+        setHighScore(score);
+        // Ensure the user object is loaded before trying to use its id
+        if (user) {
+          localStorage.setItem(`blindtest_highscore_${user.id}`, score);
+        }
+      }
+    }
+    // This effect depends on these values
+  }, [gameState, score, highScore, user]);
 
 
   // --- CORE & RENDER FUNCTIONS (FULLY IMPLEMENTED) ---
@@ -267,37 +288,20 @@ function App() {
     if (player) player.pause();
 
     if (selectedSong && selectedSong.id === quizSongs[currentQuestion].id) {
-      // --- COMBO LOGIC ---
-      // 1. Get the multiplier based on the CURRENT combo.
+      // ... (The entire logic for calculating points is UNCHANGED) ...
       const multiplier = getComboMultiplier(combo);
-
-      // 2. Calculate the base points (base + time + perfect).
-      let basePoints = 50;
-      basePoints += timeLeft * 7;
-      if (timeLeft >= 13) {
-        basePoints += 50;
-      }
-
-      // 3. Apply the multiplier and round to the nearest whole number.
+      let basePoints = 50 + (timeLeft * 7);
+      if (timeLeft >= 13) { basePoints += 50; }
       const finalPoints = Math.round(basePoints * multiplier);
-
-      // 4. Update the score and the points indicator.
       setScore(score + finalPoints);
       setPointsGained(finalPoints);
-
-      // 5. Increment the combo for the next question.
       setCombo(prevCombo => prevCombo + 1);
-
     } else {
-      // --- WRONG ANSWER: Reset the combo ---
-      if (combo > 1) { // Only show the message if they had a real combo
+      if (combo > 1) {
         setShowComboBreak(true);
-        // Hide the message after its animation is done (1 second)
-        setTimeout(() => {
-          setShowComboBreak(false);
-        }, 1000);
+        setTimeout(() => { setShowComboBreak(false); }, 1000);
       }
-      setCombo(0); // Reset the combo
+      setCombo(0);
     }
 
     setTimeout(() => {
@@ -306,6 +310,8 @@ function App() {
         setCurrentQuestion(nextQuestion);
         loadQuestion(nextQuestion, quizSongs, likedSongs);
       } else {
+        // The quiz is over. Just change the game state.
+        // The new useEffect will handle the high score logic.
         setGameState('results');
       }
     }, FEEDBACK_DELAY);
@@ -390,7 +396,27 @@ function App() {
             </div>
           </div>
         );
-      case 'results': return (<div className="results-container"><h1>Quiz Finished!</h1><h2>Your final score is: {score}</h2><button onClick={restartQuiz} className="restart-btn">Play Again</button><button onClick={handleLogout} className="restart-btn" style={{ backgroundColor: '#555', marginLeft: '1rem' }}>Logout</button></div>);
+      case 'results':
+        const lastQuestionPoints = pointsGained || 0;
+        const finalScore = score - lastQuestionPoints + lastQuestionPoints;
+
+        return (
+          <div className="results-container">
+            <h1>Quiz Finished!</h1>
+            <h2>Your final score is: {finalScore}</h2>
+
+            {/* --- NEW: High Score Display --- */}
+            <h3 className="highscore-text">All-Time High: {highScore}</h3>
+            {finalScore === highScore && finalScore > 0 && (
+              <p className="new-highscore-message">
+                🎉 NEW HIGH SCORE! 🎉
+              </p>
+            )}
+
+            <button onClick={restartQuiz} className="restart-btn">Play Again</button>
+            <button onClick={handleLogout} className="restart-btn" style={{ backgroundColor: '#555', marginLeft: '1rem' }}>Logout</button>
+          </div>
+        );
       default: return <div><h1>Connecting to Spotify...</h1><p>Please wait.</p></div>;
     }
   };
