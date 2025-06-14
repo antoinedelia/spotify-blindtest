@@ -7,6 +7,7 @@ const REDIRECT_URI = 'http://localhost:3000';
 const SCOPES = 'user-read-private user-read-email user-library-read streaming';
 const QUIZ_DURATION = 15; // Seconds per question
 const FEEDBACK_DELAY = 2000; // Milliseconds to show feedback
+const CACHE_DURATION = 24 * 60 * 60 * 1000;
 
 // Centralized Spotify API URLs for clarity
 const SPOTIFY_API = {
@@ -102,74 +103,99 @@ function App() {
 
   // --- OPTIMIZED PARALLEL DATA FETCHING ---
   useEffect(() => {
-    if (deviceId && accessToken) {
-      const fetchAllData = async () => {
-        try {
-          // Fetch User Profile
-          const userResponse = await fetch(SPOTIFY_API.me, { headers: { 'Authorization': `Bearer ${accessToken}` } });
-          if (!userResponse.ok) throw new Error('Failed to fetch user');
-          const userData = await userResponse.json();
-          setUser(userData);
+    // We need a function we can call for both initial load and force refresh
+    const fetchAllData = async (forceRefresh = false) => {
+      // Don't do anything until we have the device ID and token
+      if (!deviceId || !accessToken) return;
 
-          const storedHighScore = localStorage.getItem(`blindtest_highscore_${userData.id}`);
-          if (storedHighScore) {
-            setHighScore(parseInt(storedHighScore, 10));
-          }
+      try {
+        // We always need the user's profile to get their ID for the cache key
+        const userResponse = await fetch(SPOTIFY_API.me, { headers: { 'Authorization': `Bearer ${accessToken}` } });
+        if (!userResponse.ok) throw new Error('Failed to fetch user');
+        const userData = await userResponse.json();
+        setUser(userData);
 
-          // 1. Make a single request to get the total number of liked songs.
-          const initialTracksUrl = new URL(SPOTIFY_API.tracks);
-          initialTracksUrl.searchParams.append('limit', 1);
-          const initialResponse = await fetch(initialTracksUrl, { headers: { 'Authorization': `Bearer ${accessToken}` } });
-          if (!initialResponse.ok) throw new Error('Failed to fetch initial track count');
-          const initialData = await initialResponse.json();
-          const totalTracks = initialData.total;
+        const cacheKey = `blindtest_song_cache_${userData.id}`;
 
-          setTotalLikedSongs(totalTracks);
-
-          // 2. Calculate all the promises we need to make.
-          const limit = 50;
-          const fields = 'items(track(id,name,uri,duration_ms,artists(name)))';
-          const promises = [];
-          for (let offset = 0; offset < totalTracks; offset += limit) {
-            const url = new URL(SPOTIFY_API.tracks);
-            url.searchParams.append('limit', limit);
-            url.searchParams.append('offset', offset);
-            url.searchParams.append('fields', fields);
-            promises.push(fetch(url, { headers: { 'Authorization': `Bearer ${accessToken}` } }));
-          }
-
-          // 3. Execute all promises in parallel.
-          const responses = await Promise.all(promises);
-          for (const res of responses) {
-            if (!res.ok) {
-              if (res.status === 401) handleLogout();
-              throw new Error(`A fetch request failed with status: ${res.status}`);
+        // --- Step 1: Check for a fresh cache ---
+        if (!forceRefresh) {
+          const cachedItem = localStorage.getItem(cacheKey);
+          if (cachedItem) {
+            const cachedData = JSON.parse(cachedItem);
+            if (Date.now() - cachedData.timestamp < CACHE_DURATION) {
+              console.log("Loading songs from local cache.");
+              setLikedSongs(cachedData.songs);
+              setTotalLikedSongs(cachedData.total);
+              const storedHighScore = parseInt(localStorage.getItem(`blindtest_highscore_${userData.id}`), 10) || 0;
+              setHighScore(storedHighScore);
+              setGameState('ready');
+              return; // Success! No need to fetch from API.
             }
           }
-
-          // 4. Parse the JSON from all responses in parallel.
-          const jsonPromises = responses.map(res => res.json());
-          const paginatedResults = await Promise.all(jsonPromises);
-
-          // 5. Combine the paginated results into a single flat array.
-          const tracks = paginatedResults.flatMap(page => page.items);
-
-          // Filter tracks as before
-          const filteredTracks = tracks.map(item => item.track).filter(track => track && track.duration_ms >= 30000);
-          if (filteredTracks.length < 10) {
-            alert("You need at least 10 liked songs (longer than 30s) to play.");
-            handleLogout();
-            return;
-          }
-          setLikedSongs(filteredTracks);
-          setGameState('ready');
-
-        } catch (error) {
-          console.error("Error fetching data:", error);
         }
-      };
-      fetchAllData();
-    }
+
+        // --- Step 2: If no fresh cache, fetch from API ---
+        console.log("Cache empty, stale, or refresh forced. Fetching from Spotify API...");
+        setGameState('loading');
+
+        // Get total track count
+        const initialTracksUrl = new URL(SPOTIFY_API.tracks);
+        initialTracksUrl.searchParams.append('limit', 1);
+        const initialResponse = await fetch(initialTracksUrl, { headers: { 'Authorization': `Bearer ${accessToken}` } });
+        if (!initialResponse.ok) throw new Error('Failed to fetch initial track count');
+        const initialData = await initialResponse.json();
+        const totalTracks = initialData.total;
+        setTotalLikedSongs(totalTracks);
+
+        // --- THIS IS THE MISSING LOGIC TO RESTORE ---
+        const limit = 50;
+        const fields = 'items(track(id,name,uri,duration_ms,artists(name)))';
+        const promises = [];
+        for (let offset = 0; offset < totalTracks; offset += limit) {
+          const url = new URL(SPOTIFY_API.tracks);
+          url.searchParams.append('limit', limit);
+          url.searchParams.append('offset', offset);
+          url.searchParams.append('fields', fields);
+          promises.push(fetch(url, { headers: { 'Authorization': `Bearer ${accessToken}` } }));
+        }
+        const responses = await Promise.all(promises);
+        for (const res of responses) {
+          if (!res.ok) throw new Error(`A fetch request failed with status: ${res.status}`);
+        }
+        const jsonPromises = responses.map(res => res.json());
+        const paginatedResults = await Promise.all(jsonPromises);
+        // --- END OF MISSING LOGIC ---
+
+        const tracks = paginatedResults.flatMap(page => page.items);
+        const filteredTracks = tracks.map(item => item.track).filter(track => track && track.duration_ms >= 30000);
+
+        if (filteredTracks.length < 10) {
+          alert("You need at least 10 liked songs (longer than 30s) to play.");
+          handleLogout();
+          return;
+        }
+
+        // --- Step 3: Save the fresh data to the cache ---
+        const currentHighScore = parseInt(localStorage.getItem(`blindtest_highscore_${userData.id}`), 10) || 0;
+        const cacheData = {
+          songs: filteredTracks,
+          total: totalTracks,
+          timestamp: Date.now()
+        };
+        localStorage.setItem(cacheKey, JSON.stringify(cacheData));
+
+        setLikedSongs(filteredTracks);
+        setHighScore(currentHighScore);
+        setGameState('ready');
+
+      } catch (error) {
+        console.error("Error fetching data:", error);
+        handleLogout();
+      }
+    };
+
+    fetchAllData();
+
   }, [deviceId, accessToken]);
 
   // Effect for the countdown timer
@@ -344,15 +370,26 @@ function App() {
     switch (gameState) {
       case 'loading': return <div><h1>Loading Your Music...</h1><p>Fetching liked songs. Please wait.</p></div>;
       case 'ready':
+        const handleForceRefresh = () => {
+          // This is a bit of a workaround to re-trigger the fetch effect.
+          // A better approach would be to lift the fetchAllData function, but this works.
+          // For simplicity, we can just clear the cache and reload the page.
+          const userCacheKey = `blindtest_song_cache_${user.id}`;
+          localStorage.removeItem(userCacheKey);
+          window.location.reload();
+        };
         return (
           <div>
             <h1>Ready to Play?</h1>
             {user && <p>Welcome, {user.display_name}!</p>}
-
             <p>We've found <b>{totalLikedSongs}</b> of your liked songs.</p>
-
             <p>Click below to start the quiz.</p>
             <button onClick={startQuiz} className="quiz-btn">Start Quiz</button>
+
+            {/* --- NEW: Button to force a refresh --- */}
+            <button onClick={handleForceRefresh} className="secondary-btn">
+              Force Refresh Songs
+            </button>
           </div>
         );
       case 'quiz':
