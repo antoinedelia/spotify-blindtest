@@ -13,6 +13,16 @@ body {
   margin: 0 auto;
 }
 
+h1 {
+  font-size: 3rem;
+}
+
+h2 {
+  font-size: 2rem;
+  color: #1DB954;
+}
+
+/* --- BUTTONS --- */
 .login-btn,
 .quiz-btn,
 .restart-btn {
@@ -36,6 +46,8 @@ body {
   background-color: #1ed760;
 }
 
+
+/* --- QUIZ LAYOUT --- */
 .quiz-container {
   margin-top: 2rem;
 }
@@ -45,13 +57,12 @@ body {
   margin-bottom: 1rem;
 }
 
-.score {
-  font-size: 1.5rem;
-  font-weight: bold;
-  color: #1DB954;
-  margin-bottom: 2rem;
+.results-container {
+  margin-top: 3rem;
 }
 
+
+/* --- QUIZ OPTIONS GRID --- */
 .options-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -78,35 +89,30 @@ body {
   background-color: #383838;
 }
 
+.option-btn:disabled {
+  cursor: not-allowed;
+  opacity: 0.7;
+}
+
 .option-btn.correct {
-  background-color: #1DB954;
-  border-color: #1DB954;
+  background-color: #28a745;
+  border-color: #28a745;
+  color: #ffffff;
 }
 
 .option-btn.incorrect {
-  background-color: #d93025;
-  border-color: #d93025;
+  background-color: #dc3545;
+  border-color: #dc3545;
+  color: #ffffff;
 }
 
-.results-container {
-  margin-top: 3rem;
-}
 
-h1 {
-  font-size: 3rem;
-}
-
-h2 {
-  font-size: 2rem;
-  color: #1DB954;
-}
-
+/* --- TIMER --- */
 .timer {
   font-size: 1.5rem;
   font-weight: bold;
   color: #1DB954;
-  /* Spotify Green */
-  margin-bottom: 1.5rem;
+  margin: 1.5rem auto;
   padding: 10px;
   border: 2px solid #1DB954;
   border-radius: 50%;
@@ -115,25 +121,69 @@ h2 {
   display: flex;
   align-items: center;
   justify-content: center;
-  margin-left: auto;
-  margin-right: auto;
 }
 
-/* These styles should already exist, but ensure they are there */
-.option-btn.correct {
-  background-color: #1DB954;
-  border-color: #1DB954;
-  color: #ffffff;
+/* --- SCORE INDICATOR (NEW & CONSOLIDATED) --- */
+.score-container {
+  /* This container's only job is to provide vertical margin and
+     ensure there's enough space. It no longer uses flexbox. */
+  margin: 10px 0 2rem 0;
+  min-height: 2em;
+  /* Prevents layout jump from text appearing/disappearing */
 }
 
-.option-btn.incorrect {
-  background-color: #d93025;
-  border-color: #d93025;
-  color: #ffffff;
+.score-wrapper {
+  /* This is the key: it's an inline element that shrinks to fit its
+     content (the score text) and it acts as the positioning anchor. */
+  display: inline-block;
+  position: relative;
 }
 
-/* Add a style for disabled buttons after an answer */
-.option-btn:disabled {
-  cursor: not-allowed;
-  opacity: 0.7;
+.score {
+  /* This is back to being a simple text element. */
+  font-size: 1.5rem;
+  font-weight: bold;
+  color: #1DB954;
+}
+
+.points-gained {
+  /* Positioned absolutely relative to the score-wrapper */
+  position: absolute;
+  top: 0;
+  left: 100%;
+  /* Start exactly at the right edge of the score text */
+
+  /* Use a small margin to create the visual gap */
+  margin-left: 10px;
+
+  /* This prevents the "+80" from ever wrapping onto a new line */
+  white-space: nowrap;
+
+  /* The rest of the styling is the same */
+  font-size: 1.5rem;
+  font-weight: bold;
+  color: #28a745;
+  animation: fadeInThenOut 2s forwards;
+}
+
+@keyframes fadeInThenOut {
+  0% {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+
+  15% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  85% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  100% {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
 }

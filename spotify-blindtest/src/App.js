@@ -40,6 +40,8 @@ function App() {
   const timerIntervalRef = useRef(null);
   const songTimeoutRef = useRef(null);
 
+  const [pointsGained, setPointsGained] = useState(0);
+
 
   // --- Hooks for Authentication and SDK setup ---
   useEffect(() => {
@@ -217,6 +219,7 @@ function App() {
   };
 
   const loadQuestion = (questionIndex, currentQuizSongs, allLikedSongs) => {
+    setPointsGained(0);
     setAnswered(false);
     setSelectedAnswer(null);
     setTimeLeft(QUIZ_DURATION);
@@ -246,15 +249,22 @@ function App() {
 
   const handleAnswer = (selectedSong) => {
     if (answered) return;
+
     setAnswered(true);
     setSelectedAnswer(selectedSong);
     clearInterval(timerIntervalRef.current);
     clearTimeout(songTimeoutRef.current);
     if (player) player.pause();
+
     if (selectedSong && selectedSong.id === quizSongs[currentQuestion].id) {
       const points = Math.max(10, 100 - Math.floor((QUIZ_DURATION - timeLeft) * 5));
       setScore(score + points);
+
+      // --- THIS IS THE FIX ---
+      // Set the points gained to trigger the indicator
+      setPointsGained(points);
     }
+
     setTimeout(() => {
       const nextQuestion = currentQuestion + 1;
       if (nextQuestion < quizSongs.length) {
@@ -293,7 +303,17 @@ function App() {
         return (
           <div className="quiz-container">
             <div className="question-counter">Song {currentQuestion + 1} / {quizSongs.length}</div>
-            <div className="score">Score: {score}</div>
+            {/* --- UPDATE: New container for score and points indicator --- */}
+            <div className="score-container">
+              <div className="score-wrapper">
+                <div className="score">Score: {score}</div>
+                {pointsGained > 0 && (
+                  <div className="points-gained">
+                    +{pointsGained}
+                  </div>
+                )}
+              </div>
+            </div>
             <div className="timer">{timeLeft}</div>
             <h2>Guess the song!</h2>
             <div className="options-grid">
