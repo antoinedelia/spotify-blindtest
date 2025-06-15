@@ -331,3 +331,58 @@ h2 {
   color: #fff;
   border-color: #555;
 }
+
+.option-btn {
+  background-color: #282828;
+  border: 1px solid #404040;
+  color: #ffffff;
+  padding: 10px;
+  border-radius: 8px;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: background-color 0.2s;
+  display: flex;
+  align-items: center;
+  width: 100%;
+  /* Force the button to fill its grid column */
+  box-sizing: border-box;
+  /* Ensure padding doesn't break the width calculation */
+  overflow: hidden;
+  /* Hide anything that might spill out */
+}
+
+.option-img {
+  width: 50px;
+  height: 50px;
+  object-fit: cover;
+  /* Prevents the image from stretching */
+  border-radius: 4px;
+  margin-right: 12px;
+  /* Space between image and text */
+  flex-shrink: 0;
+  /* Prevents the image from shrinking */
+}
+
+.option-text {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  min-width: 0;
+  flex: 1;
+  /* This tells the text container to grow and fill all available space */
+}
+
+.song-name {
+  font-weight: bold;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.artist-name {
+  font-size: 0.9rem;
+  color: #b3b3b3;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}

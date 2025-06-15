@@ -149,7 +149,7 @@ function App() {
 
         // --- THIS IS THE MISSING LOGIC TO RESTORE ---
         const limit = 50;
-        const fields = 'items(track(id,name,uri,duration_ms,artists(name)))';
+        const fields = 'items(track(id,name,uri,duration_ms,artists(name),album(images)))';
         const promises = [];
         for (let offset = 0; offset < totalTracks; offset += limit) {
           const url = new URL(SPOTIFY_API.tracks);
@@ -442,7 +442,16 @@ function App() {
                   className={getButtonClassName(song)}
                   disabled={answered}
                 >
-                  {song.name} by {song.artists.map(a => a.name).join(', ')}
+                  <img
+                    // Use the smallest available image (last in the array)
+                    src={song.album?.images[song.album.images.length - 1]?.url}
+                    alt={song.name}
+                    className="option-img"
+                  />
+                  <div className="option-text">
+                    <span className="song-name">{song.name}</span>
+                    <span className="artist-name">{song.artists.map(a => a.name).join(', ')}</span>
+                  </div>
                 </button>
               ))}
             </div>
