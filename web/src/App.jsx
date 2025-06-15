@@ -493,6 +493,31 @@ function App() {
 
             <button onClick={restartQuiz} className="restart-btn">Play Again</button>
             <button onClick={handleLogout} className="restart-btn" style={{ backgroundColor: '#555', marginLeft: '1rem' }}>Logout</button>
+            <div className="playlist-summary">
+              <h3 className="playlist-title">Quiz Playlist</h3>
+              <ul className="results-song-list">
+                {quizSongs.map(song => (
+                  <li key={song.id} className="song-list-item">
+                    <a
+                      href={`http://open.spotify.com/track/${song.id}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      title={`Listen to ${song.name} on Spotify`}
+                    >
+                      <img
+                        src={song.album?.images[song.album.images.length - 1]?.url}
+                        alt={song.name}
+                        className="song-list-img"
+                      />
+                      <div className="song-list-text">
+                        <span className="song-name">{song.name}</span>
+                        <span className="artist-name">{song.artists.map(a => a.name).join(', ')}</span>
+                      </div>
+                    </a>
+                  </li>
+                ))}
+              </ul>
+            </div>
           </div>
         );
       default: return <div><h1>Connecting to Spotify...</h1><p>Please wait.</p></div>;
