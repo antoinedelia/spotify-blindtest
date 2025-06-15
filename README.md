@@ -28,6 +28,7 @@ Because it's built without a backend and uses the Spotify Web Playback SDK, the 
 ## 🔧 Built With
 
 -   [React](https://reactjs.org/)
+-   [Vite](https://vite.dev/)
 -   [Spotify Web API](https://developer.spotify.com/documentation/web-api)
 -   [Spotify Web Playback SDK](https://developer.spotify.com/documentation/web-playback-sdk)
 
@@ -59,12 +60,9 @@ You will need the following software and accounts to run this project:
     -   In the "Redirect URIs" section, add `http://localhost:5173` and click **"Save"**. This is crucial for the login flow to work locally.
 
 3.  **Configure Environment Variables:**
-    -   In the root of the project, find the `App.js` file.
-    -   Locate the following line:
-        ```javascript
-        const CLIENT_ID = 'YOUR_CLIENT_ID';
-        ```
-    -   Replace `'YOUR_CLIENT_ID'` with the actual Client ID you copied from the Spotify Developer Dashboard.
+    -   In the `web` directory of the project, find the `.env` files.
+    -   Replace `VITE_SPOTIFY_CLIENT_ID` value with the actual Client ID you copied from the Spotify Developer Dashboard.
+    -   Replace `VITE_REDIRECT_URI` value with your redirect URI.
 
 4.  **Install NPM packages:**
     ```sh
@@ -91,7 +89,7 @@ Once the application is running:
 
 ## 📜 License
 
-Distributed under the MIT License. See `LICENSE.txt` for more information.
+Distributed under the MIT License. See `LICENSE` for more information.
 
 ## 🙏 Acknowledgments
 
