@@ -8,6 +8,7 @@ const SCOPES = import.meta.env.VITE_SCOPES;
 const QUIZ_DURATION = Number(import.meta.env.VITE_QUIZ_DURATION); // Seconds per question
 const FEEDBACK_DELAY = Number(import.meta.env.VITE_FEEDBACK_DELAY); // Milliseconds to show feedback
 const CACHE_DURATION = Number(import.meta.env.VITE_CACHE_DURATION); // 1 day
+const TRACK_MIN_DURATION = Number(import.meta.env.VITE_TRACK_MIN_DURATION); // 30 seconds
 
 // Centralized Spotify API URLs for clarity
 const SPOTIFY_API = {
@@ -167,10 +168,11 @@ function App() {
         // --- END OF MISSING LOGIC ---
 
         const tracks = paginatedResults.flatMap(page => page.items);
-        const filteredTracks = tracks.map(item => item.track).filter(track => track && track.duration_ms >= 30000);
+        const filteredTracks = tracks.map(item => item.track).filter(track => track && track.duration_ms >= TRACK_MIN_DURATION);
 
         if (filteredTracks.length < 10) {
-          alert("You need at least 10 liked songs (longer than 30s) to play.");
+          const minDurationInSeconds = TRACK_MIN_DURATION / 1000;
+          alert(`You need at least 10 liked songs (longer than ${minDurationInSeconds}s) to play.`);
           handleLogout();
           return;
         }
