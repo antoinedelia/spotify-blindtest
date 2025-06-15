@@ -7,11 +7,12 @@ from frontend.frontend_acm_stack import FrontendAcmStack
 from frontend.frontend_stack import FrontendStack
 
 
+app_name = "SpotifyBlindtest"
 app = cdk.App()
 
 frontend_acm_stack = FrontendAcmStack(
     app,
-    "FrontendAcmStack",
+    f"{app_name}-FrontendAcmStack",
     domain_name="antoinedelia.fr",
     subdomain="blindtest",
     env=cdk.Environment(account="646082475080", region="us-east-1"),
@@ -19,7 +20,7 @@ frontend_acm_stack = FrontendAcmStack(
 )
 FrontendStack(
     app,
-    "FrontendStack",
+    f"{app_name}-FrontendStack",
     domain_name="antoinedelia.fr",
     subdomain="blindtest",
     certificate=frontend_acm_stack.certificate,
