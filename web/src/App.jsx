@@ -300,8 +300,10 @@ function App() {
     setSelectedAnswer(null);
     setTimeLeft(QUIZ_DURATION);
     const currentSong = currentQuizSongs[questionIndex];
-    const otherSongs = allLikedSongs.filter(s => s.id !== currentSong.id).sort(() => 0.5 - Math.random()).slice(0, 3);
-    const answerOptions = [currentSong, ...otherSongs].sort(() => 0.5 - Math.random());
+    const otherSongs = shuffleArray(
+      allLikedSongs.filter(s => s.id !== currentSong.id)
+    ).slice(0, 3);
+    const answerOptions = shuffleArray([currentSong, ...otherSongs]);
     setOptions(answerOptions);
     playSong(currentSong.uri, currentSong.duration_ms);
   };
