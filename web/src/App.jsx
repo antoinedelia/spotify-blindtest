@@ -332,7 +332,6 @@ function App() {
     setSelectedAnswer(selectedSong);
     clearInterval(timerIntervalRef.current);
     clearTimeout(songTimeoutRef.current);
-    if (player) player.pause();
 
     if (selectedSong && selectedSong.id === quizSongs[currentQuestion].id) {
       // ... (The entire logic for calculating points is UNCHANGED) ...
