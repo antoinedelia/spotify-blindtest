@@ -321,7 +321,8 @@ function App() {
       })
     });
     songTimeoutRef.current = setTimeout(() => {
-      if (player) player.pause();
+      // Player failed to guess in time
+      // if (player) player.pause();
     }, QUIZ_DURATION * 1000);
   };
 
