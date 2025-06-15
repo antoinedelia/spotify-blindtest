@@ -54,6 +54,6 @@ class FrontendStack(Stack):
         )
 
         # Outputs
-        CfnOutput(self, "WebsiteURL", value=f"https://{full_domain}", export_name="MyFrontendURL")
+        CfnOutput(self, "WebsiteURL", value=f"https://{full_domain}")
         CfnOutput(self, "CloudfrontDistributionId", value=distribution.distribution_id, description="The ID of the CloudFront distribution.")
         CfnOutput(self, "S3BucketName", value=bucket.bucket_name, description="The name of the S3 Bucket.")
