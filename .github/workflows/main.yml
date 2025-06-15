@@ -5,7 +5,8 @@ on:
     branches: [main]
 
 env:
-  CDK_ARTIFACT_NAME: cdk-outputs
+  CDK_OUTPUT_ARTIFACT_NAME: cdk-outputs
+  CDK_FRONTEND_STACK_NAME: SpotifyBlindtest-FrontendStack
 
 jobs:
   deploy-infra:
@@ -16,7 +17,7 @@ jobs:
       id-token: write
     with:
       working-directory: 'infra'
-      cdk-outputs-artifact-name: $CDK_ARTIFACT_NAME
+      cdk-outputs-artifact-name: $CDK_OUTPUT_ARTIFACT_NAME
     secrets:
       AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN }}
 
@@ -37,14 +38,14 @@ jobs:
       - name: Download CDK Outputs
         uses: actions/download-artifact@v4
         with:
-          name: $CDK_ARTIFACT_NAME
+          name: $CDK_OUTPUT_ARTIFACT_NAME
 
       # Step 2: Parse the file and set the outputs for this job.
       - name: Parse CDK Outputs
         id: parse_outputs
         run: |
-          S3_BUCKET=$(cat cdk-outputs.json | jq -r '.FrontendStack.S3BucketName')
-          CF_ID=$(cat cdk-outputs.json | jq -r '.FrontendStack.CloudfrontDistributionId')
+          S3_BUCKET=$(cat cdk-outputs.json | jq -r '.$CDK_FRONTEND_STACK_NAME.S3BucketName')
+          CF_ID=$(cat cdk-outputs.json | jq -r '.$CDK_FRONTEND_STACK_NAME.CloudfrontDistributionId')
           
           echo "s3_bucket_name=$S3_BUCKET" >> "$GITHUB_OUTPUT"
           echo "cf_distribution_id=$CF_ID" >> "$GITHUB_OUTPUT"
