@@ -4,6 +4,9 @@ on:
   push:
     branches: [main]
 
+env:
+  CDK_ARTIFACT_NAME: cdk-outputs
+
 jobs:
   deploy-infra:
     name: Deploy AWS Infrastructure
@@ -12,7 +15,8 @@ jobs:
       contents: read
       id-token: write
     with:
-      working-directory: 'infra' 
+      working-directory: 'infra'
+      cdk-outputs-artifact-name: $CDK_ARTIFACT_NAME
     secrets:
       AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN }}
 
@@ -33,7 +37,7 @@ jobs:
       - name: Download CDK Outputs
         uses: actions/download-artifact@v4
         with:
-          name: cdk-outputs
+          name: $CDK_ARTIFACT_NAME
 
       # Step 2: Parse the file and set the outputs for this job.
       - name: Parse CDK Outputs
