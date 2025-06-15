@@ -44,16 +44,6 @@ class FrontendStack(Stack):
             ),
         )
 
-        # Deploy files to S3
-        s3deploy.BucketDeployment(
-            self,
-            "DeployFrontend",
-            sources=[s3deploy.Source.asset("../web")],
-            destination_bucket=bucket,
-            distribution=distribution,
-            distribution_paths=["/*"],  # Invalidate CloudFront cache
-        )
-
         # Route53 Alias A Record
         route53.ARecord(
             self,
@@ -63,5 +53,7 @@ class FrontendStack(Stack):
             target=route53.RecordTarget.from_alias(targets.CloudFrontTarget(distribution)),
         )
 
-        # Output the URL
+        # Outputs
         CfnOutput(self, "WebsiteURL", value=f"https://{full_domain}", export_name="MyFrontendURL")
+        CfnOutput(self, "CloudfrontDistributionId", value=distribution.distribution_id, description="The ID of the CloudFront distribution.")
+        CfnOutput(self, "S3BucketName", value=bucket.bucket_name, description="The name of the S3 Bucket.")
