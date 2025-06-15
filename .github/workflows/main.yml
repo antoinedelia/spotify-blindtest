@@ -40,8 +40,8 @@ jobs:
       - name: Parse CDK Outputs
         id: parse_outputs
         run: |
-          S3_BUCKET=$(cat ${{ vars.CDK_OUTPUT_ARTIFACT_NAME }}.json | jq -r '.${{ vars.CDK_FRONTEND_STACK_NAME }}.S3BucketName')
-          CF_ID=$(cat ${{ vars.CDK_OUTPUT_ARTIFACT_NAME }}.json | jq -r '.${{ vars.CDK_FRONTEND_STACK_NAME }}.CloudfrontDistributionId')
+          S3_BUCKET=$(cat ${{ vars.CDK_OUTPUT_ARTIFACT_NAME }}.json | jq -r '.[${{ vars.CDK_FRONTEND_STACK_NAME }}].S3BucketName')
+          CF_ID=$(cat ${{ vars.CDK_OUTPUT_ARTIFACT_NAME }}.json | jq -r '.[${{ vars.CDK_FRONTEND_STACK_NAME }}].CloudfrontDistributionId')
           
           echo "s3_bucket_name=$S3_BUCKET" >> "$GITHUB_OUTPUT"
           echo "cf_distribution_id=$CF_ID" >> "$GITHUB_OUTPUT"
