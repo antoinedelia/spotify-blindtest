@@ -3,7 +3,7 @@ import './App.css';
 
 // Configuration
 const CLIENT_ID = '806836d9363342b9b4961ed33d3fc918'; // IMPORTANT: Add your Spotify Client ID
-const REDIRECT_URI = 'http://localhost:3000';
+const REDIRECT_URI = 'http://127.0.0.1:5173';
 const SCOPES = 'user-read-private user-read-email user-library-read streaming';
 const QUIZ_DURATION = 15; // Seconds per question
 const FEEDBACK_DELAY = 2000; // Milliseconds to show feedback

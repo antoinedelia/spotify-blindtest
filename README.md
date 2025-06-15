@@ -56,7 +56,7 @@ You will need the following software and accounts to run this project:
     -   Give it a name (e.g., "React Blindtest") and a description.
     -   Once created, you will see your **Client ID**. Copy this value.
     -   Click on **"Settings"**.
-    -   In the "Redirect URIs" section, add `http://localhost:3000` and click **"Save"**. This is crucial for the login flow to work locally.
+    -   In the "Redirect URIs" section, add `http://localhost:5173` and click **"Save"**. This is crucial for the login flow to work locally.
 
 3.  **Configure Environment Variables:**
     -   In the root of the project, find the `App.js` file.
@@ -76,7 +76,7 @@ You will need the following software and accounts to run this project:
     npm start
     ```
 
-    Your browser should automatically open to `http://localhost:3000`, and you'll be ready to play!
+    Your browser should automatically open to `http://localhost:5173`, and you'll be ready to play!
 
 ## 🎮 Usage
 
