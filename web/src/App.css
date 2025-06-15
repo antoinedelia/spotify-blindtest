@@ -390,30 +390,120 @@ h2 {
 @media (max-width: 600px) {
 
   body {
-    /* Reduce padding on the sides for smaller screens */
-    padding: 1rem;
+    /* Further reduce padding on mobile */
+    padding: 1rem 0.5rem;
   }
 
   h1 {
-    /* Make the main title smaller on mobile */
-    font-size: 2.5rem;
+    /* Make the titles even more compact */
+    font-size: 2rem;
+    margin-top: 0;
+  }
+
+  h2 {
+    font-size: 1.5rem;
+  }
+
+  .quiz-container,
+  .results-container {
+    /* Reduce top margin to pull everything up */
+    margin-top: 1rem;
   }
 
   /* --- The Key Change: Stacking the answer buttons --- */
   .options-grid {
     /* Switch from a 2-column grid to a single column */
     grid-template-columns: 1fr;
-    gap: 0.75rem;
-    /* Slightly reduce the gap between buttons */
+    gap: 0.5rem;
+    /* Further reduce the gap between buttons */
+    margin-top: 1.5rem;
   }
 
   .option-btn {
-    /* You can optionally make the text a bit bigger on mobile if you like */
+    padding: 12px;
+    font-size: 1rem;
+  }
+
+  .artist-name {
+    font-size: 0.85rem;
+  }
+
+  /* Make the timer smaller to save vertical space */
+  .timer {
+    font-size: 1.2rem;
+    width: 50px;
+    height: 50px;
+    margin: 1rem auto;
+  }
+
+  /* Make the combo text smaller */
+  .combo-indicator,
+  .combo-break-indicator {
+    font-size: 1.2rem;
+    margin-bottom: 0.5rem;
+  }
+
+  .combo-display-area {
+    min-height: 2.5rem;
+  }
+}
+
+@media (min-width: 992px) {
+
+  /* Increase the overall width of the app container */
+  .App {
+    max-width: 800px;
+  }
+
+  h1 {
+    font-size: 3.5rem;
+  }
+
+  h2 {
+    font-size: 2.5rem;
+  }
+
+  .quiz-btn,
+  .restart-btn {
+    padding: 20px 40px;
+    font-size: 1.5rem;
+  }
+
+  /* Make the answer grid and buttons larger */
+  .options-grid {
+    gap: 1.5rem;
+  }
+
+  .option-btn {
     padding: 15px;
+  }
+
+  .option-img {
+    width: 60px;
+    height: 60px;
+  }
+
+  .song-name {
     font-size: 1.1rem;
   }
 
   .artist-name {
     font-size: 1rem;
+  }
+
+  /* Scale up the status indicators */
+  .score {
+    font-size: 1.8rem;
+  }
+
+  .timer {
+    font-size: 1.8rem;
+    width: 70px;
+    height: 70px;
+  }
+
+  .combo-indicator,
+  .combo-break-indicator {
+    font-size: 1.8rem;
   }
 }
