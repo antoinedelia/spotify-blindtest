@@ -7,31 +7,35 @@ on:
 jobs:
   deploy-infra:
     name: Deploy AWS Infrastructure
+    uses: antoinedelia/workflows/.github/workflows/cdk.yml@main
     permissions:
       contents: read
       id-token: write
-    uses: antoinedelia/workflows/.github/workflows/cdk.yml@main
     with:
       working-directory: 'infra' 
     secrets:
       AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN }}
 
-  deploy-app:
-    name: Build and Deploy Frontend
-    needs: deploy-infra
+  prepare-deploy-inputs:
+    name: Prepare Deployment Inputs
     runs-on: ubuntu-latest
+    needs: deploy-infra
     permissions:
-      contents: read
-      id-token: write
+      contents: none # This job doesn't need to read code, only artifacts
+
+    # This job's purpose is to output the values needed by the next job.
+    outputs:
+      s3-bucket-name: ${{ steps.parse_outputs.outputs.s3_bucket_name }}
+      cloudfront-distribution-id: ${{ steps.parse_outputs.outputs.cf_distribution_id }}
 
     steps:
-      # Step 1: Download the CDK output artifact produced by the 'deploy-infra' job
+      # Step 1: Download the artifact from the 'deploy-infra' job.
       - name: Download CDK Outputs
         uses: actions/download-artifact@v4
         with:
           name: cdk-outputs
 
-      # Step 2: Parse the outputs file and prepare inputs for the next job
+      # Step 2: Parse the file and set the outputs for this job.
       - name: Parse CDK Outputs
         id: parse_outputs
         run: |
@@ -41,13 +45,18 @@ jobs:
           echo "s3_bucket_name=$S3_BUCKET" >> "$GITHUB_OUTPUT"
           echo "cf_distribution_id=$CF_ID" >> "$GITHUB_OUTPUT"
 
-      # Step 3: Call the React workflow, passing the parsed outputs as inputs
-      - name: Deploy React Application
-        uses: antoinedelia/workflows/.github/workflows/react.yml@main
-        with:
-          aws-region: 'eu-west-1'
-          working-directory: 'web'
-          s3-bucket-name: ${{ steps.parse_outputs.outputs.s3_bucket_name }}
-          cloudfront-distribution-id: ${{ steps.parse_outputs.outputs.cf_distribution_id }}
-        secrets:
-          AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN }}
+  # Job 3: Purely calls the reusable workflow, feeding it the outputs from the previous job.
+  deploy-app:
+    name: Build and Deploy Frontend
+    needs: prepare-deploy-inputs
+    uses: antoinedelia/workflows/.github/workflows/react.yml@main
+    permissions:
+      contents: read # The reusable workflow needs to check out code
+      id-token: write # The reusable workflow needs to talk to AWS
+    with:
+      aws-region: 'eu-west-1'
+      working-directory: 'web'
+      s3-bucket-name: ${{ needs.prepare-deploy-inputs.outputs.s3-bucket-name }}
+      cloudfront-distribution-id: ${{ needs.prepare-deploy-inputs.outputs.cloudfront-distribution-id }}
+    secrets:
+      AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN }}
