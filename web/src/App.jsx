@@ -269,9 +269,22 @@ function App() {
     window.location.href = REDIRECT_URI;
   };
 
+  // Using the Fisher-Yates Shuffle Algorithm
+  const shuffleArray = (array) => {
+    // Create a copy of the array to avoid modifying the original
+    const newArray = [...array];
+    for (let i = newArray.length - 1; i > 0; i--) {
+      // Pick a random index from 0 to i (inclusive)
+      const j = Math.floor(Math.random() * (i + 1));
+      // Swap the elements at position i and j
+      [newArray[i], newArray[j]] = [newArray[j], newArray[i]];
+    }
+    return newArray;
+  };
+
   const startQuiz = () => {
     const songs = likedSongs;
-    const shuffled = [...songs].sort(() => 0.5 - Math.random());
+    const shuffled = shuffleArray(songs);
     const selectedSongs = shuffled.slice(0, 10);
     setQuizSongs(selectedSongs);
     setCurrentQuestion(0);
