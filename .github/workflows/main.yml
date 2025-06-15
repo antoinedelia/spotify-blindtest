@@ -1,0 +1,53 @@
+name: Deploy the infrastructure and the website
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  deploy-infra:
+    name: Deploy AWS Infrastructure
+    permissions:
+      contents: read
+      id-token: write
+    uses: antoinedelia/workflows/.github/workflows/cdk.yml@main
+    with:
+      working-directory: 'infra' 
+    secrets:
+      AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN }}
+
+  deploy-app:
+    name: Build and Deploy Frontend
+    needs: deploy-infra
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+
+    steps:
+      # Step 1: Download the CDK output artifact produced by the 'deploy-infra' job
+      - name: Download CDK Outputs
+        uses: actions/download-artifact@v4
+        with:
+          name: cdk-outputs
+
+      # Step 2: Parse the outputs file and prepare inputs for the next job
+      - name: Parse CDK Outputs
+        id: parse_outputs
+        run: |
+          S3_BUCKET=$(cat cdk-outputs.json | jq -r '.FrontendStack.S3BucketName')
+          CF_ID=$(cat cdk-outputs.json | jq -r '.FrontendStack.CloudfrontDistributionId')
+          
+          echo "s3_bucket_name=$S3_BUCKET" >> "$GITHUB_OUTPUT"
+          echo "cf_distribution_id=$CF_ID" >> "$GITHUB_OUTPUT"
+
+      # Step 3: Call the React workflow, passing the parsed outputs as inputs
+      - name: Deploy React Application
+        uses: antoinedelia/workflows/.github/workflows/react.yml@main
+        with:
+          aws-region: 'eu-west-1'
+          working-directory: 'web'
+          s3-bucket-name: ${{ steps.parse_outputs.outputs.s3_bucket_name }}
+          cloudfront-distribution-id: ${{ steps.parse_outputs.outputs.cf_distribution_id }}
+        secrets:
+          AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN }}
