@@ -9,6 +9,7 @@ const QUIZ_DURATION = Number(import.meta.env.VITE_QUIZ_DURATION); // Seconds per
 const FEEDBACK_DELAY = Number(import.meta.env.VITE_FEEDBACK_DELAY); // Milliseconds to show feedback
 const CACHE_DURATION = Number(import.meta.env.VITE_CACHE_DURATION); // 1 day
 const TRACK_MIN_DURATION = Number(import.meta.env.VITE_TRACK_MIN_DURATION); // 30 seconds
+const PLAYER_VOLUME = Number(import.meta.env.VITE_PLAYER_VOLUME) || 0.5;
 
 // Centralized Spotify API URLs for clarity
 const SPOTIFY_API = {
@@ -88,7 +89,7 @@ function App() {
       const spotifyPlayer = new window.Spotify.Player({
         name: 'Spotify Blindtest',
         getOAuthToken: cb => { cb(accessToken); },
-        volume: 0.5
+        volume: PLAYER_VOLUME
       });
       spotifyPlayer.addListener('ready', ({ device_id }) => {
         setDeviceId(device_id);
@@ -262,6 +263,49 @@ function App() {
     window.location.href = authUrl.toString();
   };
 
+  const fadeOutAndStop = async (duration = 10000) => {
+    // Safety check to ensure the player is available
+    if (!player) return;
+
+    const intervalTime = 100; // Update volume every 100ms for a smooth fade
+    const steps = duration / intervalTime;
+
+    try {
+      // The player.getVolume() function returns a Promise
+      const initialVolume = await player.getVolume();
+
+      // If it's already silent, just pause it and we're done.
+      if (initialVolume === 0) {
+        player.pause();
+        return;
+      }
+
+      const volumeDecrement = initialVolume / steps;
+      let currentVolume = initialVolume;
+
+      const fadeInterval = setInterval(() => {
+        currentVolume -= volumeDecrement;
+
+        if (currentVolume > 0) {
+          player.setVolume(currentVolume).catch(e => {
+            console.error("Error setting volume during fade:", e);
+            clearInterval(fadeInterval); // Stop if there's an error
+          });
+        } else {
+          // Fade is complete
+          clearInterval(fadeInterval);
+          player.setVolume(0); // Ensure it's exactly 0
+          player.pause();      // Finally, pause the player
+        }
+      }, intervalTime);
+
+    } catch (e) {
+      console.error("Could not get initial volume for fade out. Pausing immediately.", e);
+      // As a fallback, just pause the music if we can't get the volume.
+      player.pause();
+    }
+  };
+
   const handleLogout = () => {
     if (player) player.disconnect();
     window.localStorage.removeItem('spotify_access_token');
@@ -283,6 +327,8 @@ function App() {
   };
 
   const startQuiz = () => {
+    // Reset volume to default volume when starting a new quiz
+    if (player) player.setVolume(PLAYER_VOLUME).catch(e => console.error("Error resetting volume:", e));
     const songs = likedSongs;
     const shuffled = shuffleArray(songs);
     const selectedSongs = shuffled.slice(0, 10);
@@ -359,6 +405,7 @@ function App() {
       } else {
         // The quiz is over. Just change the game state.
         // The new useEffect will handle the high score logic.
+        fadeOutAndStop(10000);
         setGameState('results');
       }
     }, FEEDBACK_DELAY);
