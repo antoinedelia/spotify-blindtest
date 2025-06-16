@@ -151,7 +151,7 @@ function App() {
 
         // --- THIS IS THE MISSING LOGIC TO RESTORE ---
         const limit = 50;
-        const fields = 'items(track(id,name,uri,duration_ms,artists(name),album(images)))';
+        const fields = 'items(track(id,name,uri,duration_ms,artists(name),album(images),is_playable))';
         const promises = [];
         for (let offset = 0; offset < totalTracks; offset += limit) {
           const url = new URL(SPOTIFY_API.tracks);
@@ -169,7 +169,17 @@ function App() {
         // --- END OF MISSING LOGIC ---
 
         const tracks = paginatedResults.flatMap(page => page.items);
-        const filteredTracks = tracks.map(item => item.track).filter(track => track && track.duration_ms >= TRACK_MIN_DURATION);
+        const filteredTracks = tracks.map(item => item.track).filter(track => track && track.duration_ms >= TRACK_MIN_DURATION && track.is_playable);
+
+        const skippedSongs = tracks.map(item => item.track).filter(track => track && (track.duration_ms < TRACK_MIN_DURATION || !track.is_playable));
+
+        if (skippedSongs.length > 0) {
+          console.groupCollapsed(`[Debug] Skipped ${skippedSongs.length} track(s)`);
+          skippedSongs.forEach(track => {
+            console.debug(`- ${track.name} by ${track.artists.map(a => a.name).join(', ')}`);
+          });
+          console.groupEnd();
+        }
 
         if (filteredTracks.length < 10) {
           const minDurationInSeconds = TRACK_MIN_DURATION / 1000;
