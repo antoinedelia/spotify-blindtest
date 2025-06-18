@@ -600,3 +600,96 @@ h2 {
 .warning-close-btn:hover {
   opacity: 1;
 }
+
+.settings-btn {
+  position: absolute;
+  /* Adjust top/right to align with the wrapper's padding */
+  top: 1.5rem;
+  right: 1.5rem;
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 2rem;
+  color: #fff;
+  opacity: 0.6;
+  transition: opacity 0.2s, transform 0.3s;
+  z-index: 100;
+  /* Keeps it on top of other local content */
+}
+
+.settings-btn:hover {
+  opacity: 1;
+  transform: rotate(45deg);
+}
+
+.settings-btn:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+  transform: none;
+  /* This prevents the hover rotation effect when disabled */
+}
+
+/* Modal Styles */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.7);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+.modal-content {
+  background: #282c34;
+  padding: 2rem;
+  border-radius: 10px;
+  width: 90%;
+  max-width: 500px;
+  color: #fff;
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+}
+
+.modal-content h2 {
+  margin-top: 0;
+  border-bottom: 1px solid #444;
+  padding-bottom: 0.5rem;
+}
+
+.form-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+  margin: 1.5rem 0;
+}
+
+.form-grid label {
+  text-align: right;
+  align-self: center;
+}
+
+.form-grid input {
+  padding: 0.5rem;
+  border-radius: 5px;
+  border: 1px solid #555;
+  background: #333;
+  color: #fff;
+  font-size: 1rem;
+}
+
+.modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 1rem;
+  margin-top: 2rem;
+}
+
+.main-content-wrapper {
+  position: relative;
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 1rem;
+}

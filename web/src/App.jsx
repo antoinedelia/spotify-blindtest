@@ -1,4 +1,5 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useContext } from 'react';
+import { SettingsContext } from './contexts/SettingsContext';
 import './App.css';
 
 // Configuration
@@ -17,6 +18,86 @@ const SPOTIFY_API = {
   me: 'https://api.spotify.com/v1/me',
   tracks: 'https://api.spotify.com/v1/me/tracks',
   player: 'https://api.spotify.com/v1/me/player',
+};
+
+const SettingsModal = ({ isOpen, onClose }) => {
+  const { settings, updateSettings } = useContext(SettingsContext);
+  const [localSettings, setLocalSettings] = useState(settings);
+
+  useEffect(() => {
+    setLocalSettings(settings);
+  }, [isOpen, settings]);
+
+  if (!isOpen) return null;
+
+  // --- UPDATE: Enhanced input handler with validation ---
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
+
+    // Convert input value to a number, defaulting to 0 if empty or invalid
+    let numValue = parseInt(value, 10);
+    if (isNaN(numValue)) {
+      numValue = 0;
+    }
+
+    // Apply constraints based on the input's name
+    if (name === 'questionsPerQuiz') {
+      // Clamp the value between 1 and 50
+      numValue = Math.max(1, Math.min(numValue, 50));
+    } else if (name === 'numAnswerOptions') {
+      // Clamp the value between 2 and 10
+      numValue = Math.max(2, Math.min(numValue, 10));
+    }
+
+    setLocalSettings(prev => ({ ...prev, [name]: numValue }));
+  };
+
+  const handleSave = () => {
+    updateSettings(localSettings);
+    onClose();
+  };
+
+  return (
+    <div className="modal-overlay">
+      <div className="modal-content">
+        <h2>Game Settings</h2>
+        <div className="form-grid">
+
+          <label htmlFor="questionsPerQuiz">Questions per Quiz:</label>
+          <input
+            type="number"
+            id="questionsPerQuiz"
+            name="questionsPerQuiz"
+            value={localSettings.questionsPerQuiz}
+            onChange={handleInputChange}
+            min="1"
+            max="50"
+          />
+
+          <label htmlFor="numAnswerOptions">Answer Options:</label>
+          <input
+            type="number"
+            id="numAnswerOptions"
+            name="numAnswerOptions"
+            value={localSettings.numAnswerOptions}
+            onChange={handleInputChange}
+            min="2"
+            max="10"
+          />
+
+          <label htmlFor="pointsBase">Base Points:</label>
+          <input type="number" id="pointsBase" name="pointsBase" value={localSettings.pointsBase} onChange={handleInputChange} />
+
+          <label htmlFor="pointsPerSecond">Points per Second:</label>
+          <input type="number" id="pointsPerSecond" name="pointsPerSecond" value={localSettings.pointsPerSecond} onChange={handleInputChange} />
+        </div>
+        <div className="modal-actions">
+          <button onClick={onClose} className="secondary-btn">Cancel</button>
+          <button onClick={handleSave} className="quiz-btn">Save Changes</button>
+        </div>
+      </div>
+    </div>
+  );
 };
 
 
@@ -52,10 +133,15 @@ function App() {
 
   const [showCompatibilityWarning, setShowCompatibilityWarning] = useState(false);
 
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const { settings } = useContext(SettingsContext);
+
   const getComboMultiplier = (currentCombo) => {
-    if (currentCombo >= 6) return 2.0;
-    if (currentCombo >= 4) return 1.5;
-    if (currentCombo >= 2) return 1.2;
+    for (const tier of settings.comboTiers) {
+      if (currentCombo >= tier.threshold) {
+        return tier.multiplier;
+      }
+    }
     return 1.0;
   };
 
@@ -194,9 +280,9 @@ function App() {
           console.groupEnd();
         }
 
-        if (filteredTracks.length < 10) {
+        if (filteredTracks.length < settings.minSongsToPlay) {
           const minDurationInSeconds = TRACK_MIN_DURATION / 1000;
-          alert(`You need at least 10 liked songs (longer than ${minDurationInSeconds}s) to play.`);
+          alert(`You need at least ${settings.minSongsToPlay} liked songs (longer than ${minDurationInSeconds}s) to play.`);
           handleLogout();
           return;
         }
@@ -364,7 +450,7 @@ function App() {
 
     const songs = likedSongs;
     const shuffled = shuffleArray(songs);
-    const selectedSongs = shuffled.slice(0, 10);
+    const selectedSongs = shuffled.slice(0, settings.questionsPerQuiz);
     setQuizSongs(selectedSongs);
     setCurrentQuestion(0);
     setScore(0);
@@ -381,7 +467,7 @@ function App() {
     const currentSong = currentQuizSongs[questionIndex];
     const otherSongs = shuffleArray(
       allLikedSongs.filter(s => s.id !== currentSong.id)
-    ).slice(0, 3);
+    ).slice(0, settings.numAnswerOptions - 1); // e.g., 4 options - 1 correct = 3 others
     const answerOptions = shuffleArray([currentSong, ...otherSongs]);
     setOptions(answerOptions);
     playSong(currentSong.uri, currentSong.duration_ms);
@@ -414,10 +500,11 @@ function App() {
     clearTimeout(songTimeoutRef.current);
 
     if (selectedSong && selectedSong.id === quizSongs[currentQuestion].id) {
-      // ... (The entire logic for calculating points is UNCHANGED) ...
       const multiplier = getComboMultiplier(combo);
-      let basePoints = 50 + (timeLeft * 7);
-      if (timeLeft >= 13) { basePoints += 50; }
+      let basePoints = settings.pointsBase + (timeLeft * settings.pointsPerSecond);
+      if (timeLeft >= settings.timeBonusThreshold) {
+        basePoints += settings.timeBonusPoints;
+      }
       const finalPoints = Math.round(basePoints * multiplier);
       setScore(score + finalPoints);
       setPointsGained(finalPoints);
@@ -620,7 +707,22 @@ function App() {
           </button>
         </div>
       )}
-      {renderContent()}
+      <div className="main-content-wrapper">
+        <button
+          onClick={() => setIsSettingsOpen(true)}
+          className="settings-btn"
+          title={gameState === 'quiz' ? "Settings disabled during quiz" : "Settings"}
+          disabled={gameState === 'quiz'}
+        >
+          ⚙️
+        </button>
+
+        <SettingsModal
+          isOpen={isSettingsOpen}
+          onClose={() => setIsSettingsOpen(false)}
+        />
+        {renderContent()}
+      </div>
     </div>
   );
 }
