@@ -337,8 +337,18 @@ function App() {
   };
 
   const startQuiz = () => {
-    // Reset volume to default volume when starting a new quiz
-    if (player) player.setVolume(PLAYER_VOLUME).catch(e => console.error("Error resetting volume:", e));
+    if (player) {
+      // First, activate the player element. This is crucial for mobile browsers
+      // to allow playback that isn't directly inside a click event.
+      player.activateElement().catch(err => {
+        console.error('Failed to activate player for autoplay:', err);
+        // You could optionally alert the user if this fails, but for now, we'll just log it.
+      });
+
+      // Then, reset the volume for the new quiz.
+      player.setVolume(PLAYER_VOLUME).catch(e => console.error("Error resetting volume:", e));
+    }
+
     const songs = likedSongs;
     const shuffled = shuffleArray(songs);
     const selectedSongs = shuffled.slice(0, 10);
