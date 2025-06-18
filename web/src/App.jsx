@@ -50,6 +50,8 @@ function App() {
 
   const [totalLikedSongs, setTotalLikedSongs] = useState(0);
 
+  const [showCompatibilityWarning, setShowCompatibilityWarning] = useState(false);
+
   const getComboMultiplier = (currentCombo) => {
     if (currentCombo >= 6) return 2.0;
     if (currentCombo >= 4) return 1.5;
@@ -57,6 +59,17 @@ function App() {
     return 1.0;
   };
 
+  // --- BROWSER DETECTION ---
+  useEffect(() => {
+    const userAgent = navigator.userAgent.toLowerCase();
+    // Check for both 'android' and 'firefox' in the user agent string
+    // Firefox for Android appears to not be working properly due to Encrypted Media Extensions (EME)
+    const isFirefoxOnAndroid = userAgent.includes('android') && userAgent.includes('firefox');
+
+    if (isFirefoxOnAndroid) {
+      setShowCompatibilityWarning(true);
+    }
+  }, []);
 
   // --- Hooks for Authentication and SDK setup ---
   useEffect(() => {
@@ -591,7 +604,25 @@ function App() {
     }
   };
 
-  return <div className="App">{renderContent()}</div>;
+  return (
+    <div className="App">
+      {showCompatibilityWarning && (
+        <div className="compatibility-warning">
+          <p>
+            For the best experience, we recommend using Chrome on Android. Playback may not work as expected in Firefox.
+          </p>
+          <button
+            onClick={() => setShowCompatibilityWarning(false)}
+            className="warning-close-btn"
+            title="Dismiss"
+          >
+            &times;
+          </button>
+        </div>
+      )}
+      {renderContent()}
+    </div>
+  );
 }
 
 export default App;

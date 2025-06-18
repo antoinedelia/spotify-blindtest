@@ -25,6 +25,16 @@ Because it's built without a backend and uses the Spotify Web Playback SDK, the 
 -   🔊 **Direct Audio Playback:** Music plays directly in the browser thanks to the Spotify Web Playback SDK.
 -   ☁️ **Fully Serverless:** No backend required! The app runs entirely on the client-side.
 
+## 🖥️ Browser Compatibility
+
+This application relies on advanced browser features for protected audio playback (Encrypted Media Extensions).
+
+-   ✅ **Excellent support** is available on modern desktop browsers like **Chrome**, **Firefox**, **Safari**, and **Edge**.
+-   ✅ **Mobile support** is fully functional on **Google Chrome for Android** and **Safari on iOS**.
+-   ⚠️ **Known Issue:** Due to technical limitations in how protected audio is handled, playback is **not supported on Firefox for Android**. Users on this browser will be shown a warning.
+
+For the best experience, please use a supported browser.
+
 ## 🔧 Built With
 
 -   [React](https://reactjs.org/)
