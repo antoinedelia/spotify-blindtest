@@ -4,10 +4,9 @@ Test your musical knowledge with an interactive blindtest quiz generated directl
 
 ## 🎥 Demo
 
-*(It is highly recommended to create a short GIF showcasing the application flow and add it here. A great demo would show: the login screen, the "Ready to Play" screen, answering a question correctly (green), answering incorrectly (red), and the final score screen.)*
-
-![Demo GIF Placeholder](https://user-images.githubusercontent.com/1010335/222212921-2d64b854-47b2-4b2a-a713-274a1c5d03a1.gif)
-*Your awesome demo GIF here!*
+<p align="center">
+  <img src="./assets/demo.gif" alt="Demo of Spotify Blindtest" />
+</p>
 
 ## 📖 About The Project
 
