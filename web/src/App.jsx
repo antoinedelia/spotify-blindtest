@@ -2,17 +2,15 @@ import React, { useState, useEffect, useRef, useContext } from 'react';
 import { SettingsContext } from './contexts/SettingsContext';
 import './App.css';
 
-// Configuration
 const CLIENT_ID = import.meta.env.VITE_SPOTIFY_CLIENT_ID;
 const REDIRECT_URI = import.meta.env.VITE_REDIRECT_URI;
 const SCOPES = import.meta.env.VITE_SCOPES;
-const QUIZ_DURATION = Number(import.meta.env.VITE_QUIZ_DURATION); // Seconds per question
-const FEEDBACK_DELAY = Number(import.meta.env.VITE_FEEDBACK_DELAY); // Milliseconds to show feedback
-const CACHE_DURATION = Number(import.meta.env.VITE_CACHE_DURATION); // 1 day
-const TRACK_MIN_DURATION = Number(import.meta.env.VITE_TRACK_MIN_DURATION); // 30 seconds
+const QUIZ_DURATION = Number(import.meta.env.VITE_QUIZ_DURATION);
+const FEEDBACK_DELAY = Number(import.meta.env.VITE_FEEDBACK_DELAY);
+const CACHE_DURATION = Number(import.meta.env.VITE_CACHE_DURATION);
+const TRACK_MIN_DURATION = Number(import.meta.env.VITE_TRACK_MIN_DURATION);
 const PLAYER_VOLUME = Number(import.meta.env.VITE_PLAYER_VOLUME) || 0.5;
 
-// Centralized Spotify API URLs for clarity
 const SPOTIFY_API = {
   auth: 'https://accounts.spotify.com/authorize',
   me: 'https://api.spotify.com/v1/me',
@@ -30,22 +28,16 @@ const SettingsModal = ({ isOpen, onClose }) => {
 
   if (!isOpen) return null;
 
-  // --- UPDATE: Enhanced input handler with validation ---
   const handleInputChange = (e) => {
     const { name, value } = e.target;
-
-    // Convert input value to a number, defaulting to 0 if empty or invalid
     let numValue = parseInt(value, 10);
     if (isNaN(numValue)) {
       numValue = 0;
     }
 
-    // Apply constraints based on the input's name
     if (name === 'questionsPerQuiz') {
-      // Clamp the value between 1 and 50
       numValue = Math.max(1, Math.min(numValue, 50));
     } else if (name === 'numAnswerOptions') {
-      // Clamp the value between 2 and 10
       numValue = Math.max(2, Math.min(numValue, 10));
     }
 
@@ -62,7 +54,6 @@ const SettingsModal = ({ isOpen, onClose }) => {
       <div className="modal-content">
         <h2>Game Settings</h2>
         <div className="form-grid">
-
           <label htmlFor="questionsPerQuiz">Questions per Quiz:</label>
           <input
             type="number"
@@ -73,7 +64,6 @@ const SettingsModal = ({ isOpen, onClose }) => {
             min="1"
             max="50"
           />
-
           <label htmlFor="numAnswerOptions">Answer Options:</label>
           <input
             type="number"
@@ -84,10 +74,8 @@ const SettingsModal = ({ isOpen, onClose }) => {
             min="2"
             max="10"
           />
-
           <label htmlFor="pointsBase">Base Points:</label>
           <input type="number" id="pointsBase" name="pointsBase" value={localSettings.pointsBase} onChange={handleInputChange} />
-
           <label htmlFor="pointsPerSecond">Points per Second:</label>
           <input type="number" id="pointsPerSecond" name="pointsPerSecond" value={localSettings.pointsPerSecond} onChange={handleInputChange} />
         </div>
@@ -100,16 +88,13 @@ const SettingsModal = ({ isOpen, onClose }) => {
   );
 };
 
-
 function App() {
-  // Core State
   const [accessToken, setAccessToken] = useState(null);
   const [user, setUser] = useState(null);
   const [player, setPlayer] = useState(null);
   const [deviceId, setDeviceId] = useState(null);
   const [sdkReady, setSdkReady] = useState(false);
 
-  // Game State
   const [likedSongs, setLikedSongs] = useState([]);
   const [quizSongs, setQuizSongs] = useState([]);
   const [currentQuestion, setCurrentQuestion] = useState(0);
@@ -117,7 +102,6 @@ function App() {
   const [options, setOptions] = useState([]);
   const [gameState, setGameState] = useState('login'); // login, loading, ready, quiz, results
 
-  // Improved quiz experience State
   const [timeLeft, setTimeLeft] = useState(QUIZ_DURATION);
   const [answered, setAnswered] = useState(false);
   const [selectedAnswer, setSelectedAnswer] = useState(null);
@@ -128,11 +112,8 @@ function App() {
   const [combo, setCombo] = useState(0);
   const [showComboBreak, setShowComboBreak] = useState(false);
   const [highScore, setHighScore] = useState(0);
-
   const [totalLikedSongs, setTotalLikedSongs] = useState(0);
-
   const [showCompatibilityWarning, setShowCompatibilityWarning] = useState(false);
-
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const { settings } = useContext(SettingsContext);
 
@@ -145,19 +126,15 @@ function App() {
     return 1.0;
   };
 
-  // --- BROWSER DETECTION ---
   useEffect(() => {
     const userAgent = navigator.userAgent.toLowerCase();
-    // Check for both 'android' and 'firefox' in the user agent string
-    // Firefox for Android appears to not be working properly due to Encrypted Media Extensions (EME)
+    // Firefox for Android may have issues with Encrypted Media Extensions (EME).
     const isFirefoxOnAndroid = userAgent.includes('android') && userAgent.includes('firefox');
-
     if (isFirefoxOnAndroid) {
       setShowCompatibilityWarning(true);
     }
   }, []);
 
-  // --- Hooks for Authentication and SDK setup ---
   useEffect(() => {
     const hash = window.location.hash;
     let token = window.localStorage.getItem('spotify_access_token');
@@ -202,15 +179,11 @@ function App() {
     }
   }, [sdkReady, accessToken]);
 
-  // --- OPTIMIZED PARALLEL DATA FETCHING ---
   useEffect(() => {
-    // We need a function we can call for both initial load and force refresh
     const fetchAllData = async (forceRefresh = false) => {
-      // Don't do anything until we have the device ID and token
       if (!deviceId || !accessToken) return;
 
       try {
-        // We always need the user's profile to get their ID for the cache key
         const userResponse = await fetch(SPOTIFY_API.me, { headers: { 'Authorization': `Bearer ${accessToken}` } });
         if (!userResponse.ok) throw new Error('Failed to fetch user');
         const userData = await userResponse.json();
@@ -218,7 +191,6 @@ function App() {
 
         const cacheKey = `blindtest_song_cache_${userData.id}`;
 
-        // --- Step 1: Check for a fresh cache ---
         if (!forceRefresh) {
           const cachedItem = localStorage.getItem(cacheKey);
           if (cachedItem) {
@@ -230,16 +202,14 @@ function App() {
               const storedHighScore = parseInt(localStorage.getItem(`blindtest_highscore_${userData.id}`), 10) || 0;
               setHighScore(storedHighScore);
               setGameState('ready');
-              return; // Success! No need to fetch from API.
+              return;
             }
           }
         }
 
-        // --- Step 2: If no fresh cache, fetch from API ---
         console.log("Cache empty, stale, or refresh forced. Fetching from Spotify API...");
         setGameState('loading');
 
-        // Get total track count
         const initialTracksUrl = new URL(SPOTIFY_API.tracks);
         initialTracksUrl.searchParams.append('limit', 1);
         const initialResponse = await fetch(initialTracksUrl, { headers: { 'Authorization': `Bearer ${accessToken}` } });
@@ -248,7 +218,6 @@ function App() {
         const totalTracks = initialData.total;
         setTotalLikedSongs(totalTracks);
 
-        // --- THIS IS THE MISSING LOGIC TO RESTORE ---
         const limit = 50;
         const fields = 'items(track(id,name,uri,duration_ms,artists(name),album(images),is_playable))';
         const promises = [];
@@ -265,13 +234,11 @@ function App() {
         }
         const jsonPromises = responses.map(res => res.json());
         const paginatedResults = await Promise.all(jsonPromises);
-        // --- END OF MISSING LOGIC ---
 
         const tracks = paginatedResults.flatMap(page => page.items);
         const filteredTracks = tracks.map(item => item.track).filter(track => track && track.duration_ms >= TRACK_MIN_DURATION && track.is_playable);
 
         const skippedSongs = tracks.map(item => item.track).filter(track => track && (track.duration_ms < TRACK_MIN_DURATION || !track.is_playable));
-
         if (skippedSongs.length > 0) {
           console.groupCollapsed(`[Debug] Skipped ${skippedSongs.length} track(s)`);
           skippedSongs.forEach(track => {
@@ -287,7 +254,6 @@ function App() {
           return;
         }
 
-        // --- Step 3: Save the fresh data to the cache ---
         const currentHighScore = parseInt(localStorage.getItem(`blindtest_highscore_${userData.id}`), 10) || 0;
         const cacheData = {
           songs: filteredTracks,
@@ -295,22 +261,17 @@ function App() {
           timestamp: Date.now()
         };
         localStorage.setItem(cacheKey, JSON.stringify(cacheData));
-
         setLikedSongs(filteredTracks);
         setHighScore(currentHighScore);
         setGameState('ready');
-
       } catch (error) {
         console.error("Error fetching data:", error);
         handleLogout();
       }
     };
-
     fetchAllData();
-
   }, [deviceId, accessToken]);
 
-  // Effect for the countdown timer
   useEffect(() => {
     if (gameState === 'quiz' && !answered) {
       timerIntervalRef.current = setInterval(() => {
@@ -324,24 +285,18 @@ function App() {
   }, [gameState, answered, currentQuestion]);
 
   useEffect(() => {
-    // We only care about what happens when the game state becomes 'results'
     if (gameState === 'results') {
-      // At this point, the 'score' state is guaranteed to be the final score.
       if (score > highScore) {
         setHighScore(score);
-        // Ensure the user object is loaded before trying to use its id
         if (user) {
           localStorage.setItem(`blindtest_highscore_${user.id}`, score);
         }
       }
     }
-    // This effect depends on these values
   }, [gameState, score, highScore, user]);
 
-
-  // --- CORE & RENDER FUNCTIONS (FULLY IMPLEMENTED) ---
-
   const handleLogin = async () => {
+    // Implements the PKCE Authorization Flow for Spotify.
     const generateRandomString = (length) => {
       const possible = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
       const values = crypto.getRandomValues(new Uint8Array(length));
@@ -379,14 +334,11 @@ function App() {
     window.location.href = REDIRECT_URI;
   };
 
-  // Using the Fisher-Yates Shuffle Algorithm
+  // Uses the Fisher-Yates Shuffle Algorithm for unbiased randomization.
   const shuffleArray = (array) => {
-    // Create a copy of the array to avoid modifying the original
     const newArray = [...array];
     for (let i = newArray.length - 1; i > 0; i--) {
-      // Pick a random index from 0 to i (inclusive)
       const j = Math.floor(Math.random() * (i + 1));
-      // Swap the elements at position i and j
       [newArray[i], newArray[j]] = [newArray[j], newArray[i]];
     }
     return newArray;
@@ -394,14 +346,10 @@ function App() {
 
   const startQuiz = () => {
     if (player) {
-      // First, activate the player element. This is crucial for mobile browsers
-      // to allow playback that isn't directly inside a click event.
+      // Activating the player is crucial for mobile browsers to allow autoplay.
       player.activateElement().catch(err => {
         console.error('Failed to activate player for autoplay:', err);
-        // You could optionally alert the user if this fails, but for now, we'll just log it.
       });
-
-      // Then, reset the volume for the new quiz.
       player.setVolume(PLAYER_VOLUME).catch(e => console.error("Error resetting volume:", e));
     }
 
@@ -424,7 +372,7 @@ function App() {
     const currentSong = currentQuizSongs[questionIndex];
     const otherSongs = shuffleArray(
       allLikedSongs.filter(s => s.id !== currentSong.id)
-    ).slice(0, settings.numAnswerOptions - 1); // e.g., 4 options - 1 correct = 3 others
+    ).slice(0, settings.numAnswerOptions - 1);
     const answerOptions = shuffleArray([currentSong, ...otherSongs]);
     setOptions(answerOptions);
     playSong(currentSong.uri, currentSong.duration_ms);
@@ -443,8 +391,7 @@ function App() {
       })
     });
     songTimeoutRef.current = setTimeout(() => {
-      // Player failed to guess in time
-      // if (player) player.pause();
+      // Intentionally empty: handleAnswer(null) is called by the main timer.
     }, QUIZ_DURATION * 1000);
   };
 
@@ -480,8 +427,6 @@ function App() {
         setCurrentQuestion(nextQuestion);
         loadQuestion(nextQuestion, quizSongs, likedSongs);
       } else {
-        // The quiz is over. Just change the game state.
-        // The new useEffect will handle the high score logic.
         if (player) player.pause();
         setGameState('results');
       }
@@ -512,9 +457,6 @@ function App() {
       case 'loading': return <div><h1>Loading Your Music...</h1><p>Fetching liked songs. Please wait.</p></div>;
       case 'ready':
         const handleForceRefresh = () => {
-          // This is a bit of a workaround to re-trigger the fetch effect.
-          // A better approach would be to lift the fetchAllData function, but this works.
-          // For simplicity, we can just clear the cache and reload the page.
           const userCacheKey = `blindtest_song_cache_${user.id}`;
           localStorage.removeItem(userCacheKey);
           window.location.reload();
@@ -526,8 +468,6 @@ function App() {
             <p>We've found <b>{totalLikedSongs}</b> of your liked songs.</p>
             <p>Click below to start the quiz.</p>
             <button onClick={startQuiz} className="quiz-btn">Start Quiz</button>
-
-            {/* --- NEW: Button to force a refresh --- */}
             <button onClick={handleForceRefresh} className="secondary-btn">
               Force Refresh Songs
             </button>
@@ -535,18 +475,15 @@ function App() {
         );
       case 'quiz':
         const currentMultiplier = getComboMultiplier(combo);
-
         let comboClassName = "combo-indicator";
         if (currentMultiplier >= 2.0) {
-          comboClassName += " combo-max"; // Red for 2.0x
+          comboClassName += " combo-max";
         } else if (currentMultiplier >= 1.5) {
-          comboClassName += " combo-hot"; // Orange for 1.5x
+          comboClassName += " combo-hot";
         }
-
         return (
           <div className="quiz-container">
             <div className="question-counter">Song {currentQuestion + 1} / {quizSongs.length}</div>
-            {/* --- UPDATE: New container for score and points indicator --- */}
             <div className="score-container">
               <div className="score-wrapper">
                 <div className="score">Score: {score}</div>
@@ -558,17 +495,14 @@ function App() {
               </div>
             </div>
             <div className="combo-display-area">
-              {/* The active combo multiplier */}
               {currentMultiplier > 1.0 && (
                 <div
-                  // --- NEW: The 'key' forces a re-render and re-animation on change ---
-                  key={currentMultiplier}
+                  key={currentMultiplier} // Force re-render and re-animation on change
                   className={comboClassName}
                 >
                   {currentMultiplier.toFixed(1)}x MULTIPLIER
                 </div>
               )}
-              {/* The "Combo Lost" message */}
               {showComboBreak && (
                 <div className="combo-break-indicator">COMBO LOST</div>
               )}
@@ -584,7 +518,6 @@ function App() {
                   disabled={answered}
                 >
                   <img
-                    // Use the smallest available image (last in the array)
                     src={song.album?.images[song.album.images.length - 1]?.url}
                     alt={song.name}
                     className="option-img"
@@ -601,20 +534,16 @@ function App() {
       case 'results':
         const lastQuestionPoints = pointsGained || 0;
         const finalScore = score - lastQuestionPoints + lastQuestionPoints;
-
         return (
           <div className="results-container">
             <h1>Quiz Finished!</h1>
             <h2>Your final score is: {finalScore}</h2>
-
-            {/* --- NEW: High Score Display --- */}
             <h3 className="highscore-text">All-Time High: {highScore}</h3>
             {finalScore === highScore && finalScore > 0 && (
               <p className="new-highscore-message">
                 🎉 NEW HIGH SCORE! 🎉
               </p>
             )}
-
             <button onClick={restartQuiz} className="restart-btn">Play Again</button>
             <button onClick={handleLogout} className="restart-btn" style={{ backgroundColor: '#555', marginLeft: '1rem' }}>Logout</button>
             <div className="playlist-summary">
@@ -660,7 +589,7 @@ function App() {
             className="warning-close-btn"
             title="Dismiss"
           >
-            &times;
+            ×
           </button>
         </div>
       )}
@@ -673,7 +602,6 @@ function App() {
         >
           ⚙️
         </button>
-
         <SettingsModal
           isOpen={isSettingsOpen}
           onClose={() => setIsSettingsOpen(false)}

@@ -22,7 +22,6 @@ h2 {
   color: #1DB954;
 }
 
-/* --- BUTTONS --- */
 .login-btn,
 .quiz-btn,
 .restart-btn {
@@ -46,8 +45,6 @@ h2 {
   background-color: #1ed760;
 }
 
-
-/* --- QUIZ LAYOUT --- */
 .quiz-container {
   margin-top: 2rem;
 }
@@ -61,8 +58,6 @@ h2 {
   margin-top: 3rem;
 }
 
-
-/* --- QUIZ OPTIONS GRID --- */
 .options-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -74,16 +69,18 @@ h2 {
   background-color: #282828;
   border: 1px solid #404040;
   color: #ffffff;
-  padding: 15px;
+  padding: 10px;
   border-radius: 8px;
   font-size: 1rem;
   cursor: pointer;
   transition: background-color 0.2s;
-  height: 100%;
   display: flex;
   align-items: center;
-  justify-content: center;
+  width: 100%;
+  box-sizing: border-box;
+  overflow: hidden;
 }
+
 
 .option-btn:hover {
   background-color: #383838;
@@ -106,8 +103,6 @@ h2 {
   color: #ffffff;
 }
 
-
-/* --- TIMER --- */
 .timer {
   font-size: 1.5rem;
   font-weight: bold;
@@ -123,43 +118,33 @@ h2 {
   justify-content: center;
 }
 
-/* --- SCORE INDICATOR (NEW & CONSOLIDATED) --- */
+/*
+  The score layout prevents the page from jumping when the points-gained
+  text appears and disappears. The wrapper is an inline anchor, and the
+  points are positioned absolutely relative to it.
+*/
 .score-container {
-  /* This container's only job is to provide vertical margin and
-     ensure there's enough space. It no longer uses flexbox. */
   margin: 10px 0 2rem 0;
   min-height: 2em;
-  /* Prevents layout jump from text appearing/disappearing */
 }
 
 .score-wrapper {
-  /* This is the key: it's an inline element that shrinks to fit its
-     content (the score text) and it acts as the positioning anchor. */
   display: inline-block;
   position: relative;
 }
 
 .score {
-  /* This is back to being a simple text element. */
   font-size: 1.5rem;
   font-weight: bold;
   color: #1DB954;
 }
 
 .points-gained {
-  /* Positioned absolutely relative to the score-wrapper */
   position: absolute;
   top: 0;
   left: 100%;
-  /* Start exactly at the right edge of the score text */
-
-  /* Use a small margin to create the visual gap */
   margin-left: 10px;
-
-  /* This prevents the "+80" from ever wrapping onto a new line */
   white-space: nowrap;
-
-  /* The rest of the styling is the same */
   font-size: 1.5rem;
   font-weight: bold;
   color: #28a745;
@@ -188,10 +173,8 @@ h2 {
   }
 }
 
-/* --- COMBO INDICATOR --- */
 .combo-display-area {
   min-height: 3rem;
-  /* Reserve vertical space to prevent layout jumps */
   display: flex;
   align-items: center;
   justify-content: center;
@@ -199,38 +182,31 @@ h2 {
 }
 
 .combo-indicator {
-  /* Default color for the 1.2x multiplier */
   color: #1DB954;
-  /* Spotify Green */
   font-weight: bold;
   font-size: 1.6rem;
   text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
   animation: combo-pop 0.3s ease-out;
 }
 
-/* NEW: Tier 2 Color (1.5x) */
 .combo-indicator.combo-hot {
   color: #ff9800;
-  /* Fiery Orange */
+  /* Orange for 1.5x */
 }
 
-/* NEW: Tier 3 Color (2.0x) */
 .combo-indicator.combo-max {
   color: #f44336;
-  /* Powerful Red */
+  /* Red for 2.0x */
 }
 
-/* NEW: Combo break indicator style */
 .combo-break-indicator {
   color: #dc3545;
-  /* A harsh red */
   font-weight: bold;
   font-size: 1.6rem;
   animation: shake-and-fade 1s ease-out;
 }
 
-
-/* This animation is used for the combo indicator appearing or leveling up */
+/* Animation for the combo indicator appearing or leveling up */
 @keyframes combo-pop {
   from {
     transform: scale(0.5);
@@ -243,7 +219,7 @@ h2 {
   }
 }
 
-/* NEW: This animation is used for the "COMBO LOST" message */
+/* Animation for the "COMBO LOST" message */
 @keyframes shake-and-fade {
   0% {
     transform: translateX(0);
@@ -291,7 +267,6 @@ h2 {
   font-size: 1.5rem;
   font-weight: bold;
   color: #ffeb3b;
-  /* A celebratory gold color */
   text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
   animation: new-highscore-pop 0.5s ease-out;
 }
@@ -320,9 +295,7 @@ h2 {
   transition: all 0.2s;
   text-decoration: none;
   display: block;
-  /* Make it appear on its own line */
   margin: 1.5rem auto 0 auto;
-  /* Center it with top margin */
   width: 200px;
 }
 
@@ -332,35 +305,13 @@ h2 {
   border-color: #555;
 }
 
-.option-btn {
-  background-color: #282828;
-  border: 1px solid #404040;
-  color: #ffffff;
-  padding: 10px;
-  border-radius: 8px;
-  font-size: 1rem;
-  cursor: pointer;
-  transition: background-color 0.2s;
-  display: flex;
-  align-items: center;
-  width: 100%;
-  /* Force the button to fill its grid column */
-  box-sizing: border-box;
-  /* Ensure padding doesn't break the width calculation */
-  overflow: hidden;
-  /* Hide anything that might spill out */
-}
-
 .option-img {
   width: 50px;
   height: 50px;
   object-fit: cover;
-  /* Prevents the image from stretching */
   border-radius: 4px;
   margin-right: 12px;
-  /* Space between image and text */
   flex-shrink: 0;
-  /* Prevents the image from shrinking */
 }
 
 .option-text {
@@ -369,7 +320,6 @@ h2 {
   justify-content: center;
   min-width: 0;
   flex: 1;
-  /* This tells the text container to grow and fill all available space */
 }
 
 .song-name {
@@ -388,14 +338,11 @@ h2 {
 }
 
 @media (max-width: 600px) {
-
   body {
-    /* Further reduce padding on mobile */
     padding: 1rem 0.5rem;
   }
 
   h1 {
-    /* Make the titles even more compact */
     font-size: 2rem;
     margin-top: 0;
   }
@@ -406,16 +353,12 @@ h2 {
 
   .quiz-container,
   .results-container {
-    /* Reduce top margin to pull everything up */
     margin-top: 1rem;
   }
 
-  /* --- The Key Change: Stacking the answer buttons --- */
   .options-grid {
-    /* Switch from a 2-column grid to a single column */
     grid-template-columns: 1fr;
     gap: 0.5rem;
-    /* Further reduce the gap between buttons */
     margin-top: 1.5rem;
   }
 
@@ -428,7 +371,6 @@ h2 {
     font-size: 0.85rem;
   }
 
-  /* Make the timer smaller to save vertical space */
   .timer {
     font-size: 1.2rem;
     width: 50px;
@@ -436,7 +378,6 @@ h2 {
     margin: 1rem auto;
   }
 
-  /* Make the combo text smaller */
   .combo-indicator,
   .combo-break-indicator {
     font-size: 1.2rem;
@@ -449,8 +390,6 @@ h2 {
 }
 
 @media (min-width: 992px) {
-
-  /* Increase the overall width of the app container */
   .App {
     max-width: 800px;
   }
@@ -469,7 +408,6 @@ h2 {
     font-size: 1.5rem;
   }
 
-  /* Make the answer grid and buttons larger */
   .options-grid {
     gap: 1.5rem;
   }
@@ -491,7 +429,6 @@ h2 {
     font-size: 1rem;
   }
 
-  /* Scale up the status indicators */
   .score {
     font-size: 1.8rem;
   }
@@ -537,7 +474,6 @@ h2 {
   transition: background-color 0.2s;
   text-decoration: none;
   color: inherit;
-  /* Inherit the white text color from the body */
 }
 
 .song-list-item a:hover {
@@ -562,16 +498,13 @@ h2 {
 
 .compatibility-warning {
   background-color: #ffc107;
-  /* A standard warning yellow */
   color: #333;
   padding: 0.75rem 1.5rem;
   position: sticky;
-  /* Will stick to the top as you scroll */
   top: 0;
   left: 0;
   right: 0;
   z-index: 2000;
-  /* Ensure it's on top of everything else */
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -603,7 +536,6 @@ h2 {
 
 .settings-btn {
   position: absolute;
-  /* Adjust top/right to align with the wrapper's padding */
   top: 1.5rem;
   right: 1.5rem;
   background: none;
@@ -614,7 +546,6 @@ h2 {
   opacity: 0.6;
   transition: opacity 0.2s, transform 0.3s;
   z-index: 100;
-  /* Keeps it on top of other local content */
 }
 
 .settings-btn:hover {
@@ -626,10 +557,8 @@ h2 {
   opacity: 0.3;
   cursor: not-allowed;
   transform: none;
-  /* This prevents the hover rotation effect when disabled */
 }
 
-/* Modal Styles */
 .modal-overlay {
   position: fixed;
   top: 0;
