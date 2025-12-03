@@ -103,4 +103,3 @@ Distributed under the MIT License. See `LICENSE` for more information.
 ## 🙏 Acknowledgments
 
 -   A huge thanks to [Spotify](https://www.spotify.com) for providing the fantastic APIs that make this project possible.
--   [Create React App](https://github.com/facebook/create-react-app) for the project boilerplate.
