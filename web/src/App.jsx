@@ -14,8 +14,9 @@ const PLAYER_VOLUME = Number(import.meta.env.VITE_PLAYER_VOLUME) || 0.5;
 const SPOTIFY_API = {
   auth: 'https://accounts.spotify.com/authorize',
   me: 'https://api.spotify.com/v1/me',
-  tracks: 'https://api.spotify.com/v1/me/tracks',
   player: 'https://api.spotify.com/v1/me/player',
+  token: 'https://accounts.spotify.com/api/token',
+  tracks: 'https://api.spotify.com/v1/me/tracks',
 };
 
 const SettingsModal = ({ isOpen, onClose }) => {
@@ -136,14 +137,64 @@ function App() {
   }, []);
 
   useEffect(() => {
-    const hash = window.location.hash;
+    const params = new URLSearchParams(window.location.search);
+    let code = params.get('code');
     let token = window.localStorage.getItem('spotify_access_token');
-    if (!token && hash) {
-      token = new URLSearchParams(hash.substring(1)).get('access_token');
-      window.location.hash = '';
-      window.localStorage.setItem('spotify_access_token', token);
+
+    if (code && !token) {
+      const codeVerifier = window.localStorage.getItem('code_verifier');
+      if (!codeVerifier) {
+        console.error("No code verifier found in localStorage.");
+        return;
+      }
+
+      const exchangeCodeForToken = async () => {
+        try {
+          const response = await fetch(SPOTIFY_API.token, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+            body: new URLSearchParams({
+              client_id: CLIENT_ID,
+              grant_type: 'authorization_code',
+              code,
+              redirect_uri: REDIRECT_URI,
+              code_verifier: codeVerifier,
+            }),
+          });
+
+          if (!response.ok) {
+            const errorData = await response.json();
+            console.error("Token exchange failed:", errorData);
+            throw new Error('Token exchange failed');
+          }
+
+          const data = await response.json();
+                
+          // Set the token and clean up
+          window.localStorage.setItem('spotify_access_token', data.access_token);
+          // Also store the refresh_token if provided (optional but recommended for long-term sessions)
+          if (data.refresh_token) {
+            window.localStorage.setItem('spotify_refresh_token', data.refresh_token);
+          }
+              
+          window.localStorage.removeItem('code_verifier');
+
+          // Clean the URL of the 'code' parameter without a full refresh
+          const newUrl = window.location.origin + window.location.pathname;
+          window.history.replaceState(null, '', newUrl);
+
+          setAccessToken(data.access_token);
+        } catch (error) {
+          console.error("Error during code exchange:", error);
+          // Handle token exchange error (e.g., show an error message, go back to login)
+          // handleLogout(); // This might be too aggressive, better to handle the error gracefully
+        }
+      };
+      exchangeCodeForToken();
+    } else if (token) {
+      // If a token already exists, use it
+      setAccessToken(token);
     }
-    setAccessToken(token);
   }, []);
 
   useEffect(() => {
@@ -317,7 +368,7 @@ function App() {
     const codeChallenge = base64encode(hashed);
     const authUrl = new URL(SPOTIFY_API.auth);
     authUrl.search = new URLSearchParams({
-      response_type: 'token',
+      response_type: 'code',
       client_id: CLIENT_ID,
       scope: SCOPES,
       redirect_uri: REDIRECT_URI,
