@@ -21,7 +21,7 @@ In the project directory, you can run:
 ### `npm run start`
 
 Runs the app in development mode.
-Open the URL printed in your terminal (usually http://localhost:5173) to view it in your browser.
+Open the URL printed in your terminal (usually http://127.0.0.1:5173) to view it in your browser.
 The server uses Hot Module Replacement (HMR), so the page will provide instant updates as you make changes to your code.
 You will also see any lint errors in the console.
 
